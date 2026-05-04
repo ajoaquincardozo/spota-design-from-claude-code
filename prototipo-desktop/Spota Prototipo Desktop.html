@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Spota — Prototipo Desktop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Fraunces:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; font-family: "DM Sans", system-ui, sans-serif; background: #FFF8ED; color: #2B2523; -webkit-font-smoothing: antialiased; }
+  body { min-height: 100vh; }
+  #app { width: 100%; min-height: 100vh; }
+  button { font-family: inherit; }
+  input, textarea { font-family: inherit; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: #EADFC9; border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: #D6C8AB; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="app"></div>
+
+<!-- tokens.jsx -->
+<script type="text/babel" data-presets="react">
+const SPOTA = {
+  c: {
+    primary: '#2F6F5E', primaryDark: '#1F4F44', primaryLight: '#4A8A78', primarySoft: '#E2EEE9',
+    secondary: '#B85C38', secondaryDark: '#9A4928', secondaryLight: '#D17A55', secondarySoft: '#F7E3D7',
+    accent: '#E9A23B', accentSoft: '#FBEBC8',
+    bg: '#FFF8ED', bgAlt: '#FFFDF7', surface: '#FFFFFF',
+    line: '#EADFC9', lineSoft: '#F0E6D2',
+    text: '#2B2523', textSoft: '#6B5E55', textMuted: '#9A8B7E',
+    success: '#3F8B5E', danger: '#C84B3A',
+  },
+  font: {
+    ui: '"DM Sans", "Inter", system-ui, -apple-system, sans-serif',
+    serif: '"Fraunces", "Times New Roman", serif',
+  },
+  radius: { sm: 8, md: 12, lg: 16, xl: 20, pill: 9999 },
+  shadow: {
+    card: '0 1px 2px rgba(43,37,35,0.04), 0 4px 16px rgba(43,37,35,0.06)',
+    cardHover: '0 2px 4px rgba(43,37,35,0.06), 0 12px 28px rgba(43,37,35,0.10)',
+    pop: '0 8px 24px rgba(43,37,35,0.12), 0 2px 6px rgba(43,37,35,0.06)',
+    nav: '0 2px 12px rgba(43,37,35,0.06)',
+  },
+};
+
+const PHOTOS = {
+  cafe: 'photo-1554118811-1e0d58224f24',
+  cafePalermo: 'photo-1521017432531-fbd92d768814',
+  bar: 'photo-1514933651103-005eec06c04b',
+  pasta: 'photo-1551183053-bf91a1d81141',
+  brunch: 'photo-1533089860892-a7c6f0a88666',
+  libreria: 'photo-1521587760476-6c12a4b040da',
+  graffiti: 'photo-1551033406-611cf9a28f67',
+  parquePalermo: 'photo-1565689157206-0fddef7589a2',
+  cervezaArtesanal: 'photo-1535958636474-b021ee887b13',
+  vino: 'photo-1510812431401-41d2bd2722f3',
+  cocteles: 'photo-1551024506-0bccd828d307',
+  parrilla: 'photo-1546964124-0cce460f38ef',
+  helado: 'photo-1501443762994-82bd5dace89a',
+  museo: 'photo-1565060169187-5284f59c1e9b',
+  yoga: 'photo-1545205597-3d9d02c29597',
+};
+function photo(key, w = 800, h = 600) {
+  const id = PHOTOS[key] || PHOTOS.cafe;
+  return `https://images.unsplash.com/${id}?w=${w}&h=${h}&fit=crop&auto=format&q=70`;
+}
+
+function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i++) h = ((h << 5) - h) + s.charCodeAt(i); return h; }
+function avatar(seed, w = 120) {
+  const ids = [
+    'photo-1494790108377-be9c29b29330', 'photo-1535713875002-d1d0cf377fde',
+    'photo-1438761681033-6461ffad8d80', 'photo-1472099645785-5658abf4ff4e',
+    'photo-1500648767791-00dcc994a43e', 'photo-1517841905240-472988babdf9',
+    'photo-1531123897727-8f129e1688ce', 'photo-1487412720507-e7ab37603c6f',
+  ];
+  return `https://images.unsplash.com/${ids[Math.abs(hashStr(seed)) % ids.length]}?w=${w}&h=${w}&fit=crop&auto=format&q=70`;
+}
+
+Object.assign(window, { SPOTA, PHOTOS, photo, avatar });
+</script>
+
+<!-- data.jsx -->
+<script type="text/babel" data-presets="react">
+const PLACES = [
+  { id: 'p1', name: 'Café Cobrand', cat: 'Cafetería', hood: 'Palermo', score: 4.8, reviews: 312, affinity: 94, price: '$$', img: 'cafePalermo', tag: 'Popular', visited: true, benefit: '−15% café' },
+  { id: 'p2', name: 'Casa Nómade', cat: 'Restaurante', hood: 'Colegiales', score: 4.6, reviews: 182, affinity: 88, price: '$$', img: 'pasta', tag: 'Nuevo' },
+  { id: 'p3', name: 'Librería El Refugio', cat: 'Cultura', hood: 'Villa Crespo', score: 4.8, reviews: 310, affinity: 91, price: 'Gratis', img: 'libreria', tag: 'Recomendado', visited: true },
+  { id: 'p4', name: 'Arte en las Calles', cat: 'Recorrido', hood: 'Centro', score: 4.5, reviews: 201, affinity: 82, price: 'Gratis', img: 'graffiti' },
+  { id: 'p5', name: 'Parque Centenario', cat: 'Aire libre', hood: 'Caballito', score: 4.7, reviews: 154, affinity: 79, price: 'Gratis', img: 'parquePalermo' },
+  { id: 'p6', name: 'Bar Tinto', cat: 'Vinos', hood: 'San Telmo', score: 4.7, reviews: 245, affinity: 90, price: '$$$', img: 'vino', benefit: 'Copa cortesía' },
+  { id: 'p7', name: 'Feria de Diseño', cat: 'Mercado', hood: 'Palermo', score: 4.7, reviews: 256, affinity: 86, price: 'Gratis', img: 'cocteles', tag: 'Popular' },
+  { id: 'p8', name: 'La Birrería', cat: 'Cervecería', hood: 'Chacarita', score: 4.6, reviews: 198, affinity: 84, price: '$$', img: 'cervezaArtesanal' },
+  { id: 'p9', name: 'Don Asado', cat: 'Parrilla', hood: 'Boedo', score: 4.9, reviews: 421, affinity: 76, price: '$$$', img: 'parrilla' },
+  { id: 'p10', name: 'Helado de Antes', cat: 'Heladería', hood: 'Recoleta', score: 4.8, reviews: 289, affinity: 81, price: '$', img: 'helado' },
+];
+
+const CATEGORIES = [
+  { id: 'cafe', label: 'Cafés', icon: 'coffee' },
+  { id: 'comida', label: 'Comida', icon: 'utensils' },
+  { id: 'bares', label: 'Bares', icon: 'bar' },
+  { id: 'cultura', label: 'Cultura', icon: 'palette' },
+  { id: 'aire', label: 'Aire libre', icon: 'leaf' },
+  { id: 'planes', label: 'Planes', icon: 'sparkles' },
+];
+
+Object.assign(window, { PLACES, CATEGORIES });
+</script>
+
+<!-- components.jsx -->
+<script type="text/babel" data-presets="react">
+// Icon — set completo del mobile, mismo trazado
+const Icon = ({ name, size = 24, color = 'currentColor', strokeWidth = 1.75, fill = 'none' }) => {
+  const p = { width: size, height: size, viewBox: '0 0 24 24', fill, stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' };
+  switch (name) {
+    case 'pin': return <svg {...p}><path d="M12 21s-7-7.5-7-12a7 7 0 0 1 14 0c0 4.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>;
+    case 'pinFill': return <svg {...p} fill={color} stroke="none"><path d="M12 21s-7-7.5-7-12a7 7 0 0 1 14 0c0 4.5-7 12-7 12zM12 11.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/></svg>;
+    case 'search': return <svg {...p}><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>;
+    case 'heart': return <svg {...p}><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/></svg>;
+    case 'heartFill': return <svg {...p} fill={color} stroke="none"><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/></svg>;
+    case 'star': return <svg {...p} fill={color} stroke="none"><path d="m12 3 2.7 5.5 6 .9-4.3 4.2 1 6-5.4-2.8L6.6 19.6l1-6L3.3 9.4l6-.9z"/></svg>;
+    case 'starOutline': return <svg {...p}><path d="m12 3 2.7 5.5 6 .9-4.3 4.2 1 6-5.4-2.8L6.6 19.6l1-6L3.3 9.4l6-.9z"/></svg>;
+    case 'check': return <svg {...p}><path d="m4 12 5 5L20 6"/></svg>;
+    case 'checkCircle': return <svg {...p}><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>;
+    case 'compass': return <svg {...p}><circle cx="12" cy="12" r="9"/><path d="m15 9-2 5-5 2 2-5z" fill={color}/></svg>;
+    case 'collection': return <svg {...p}><rect x="3" y="5" width="14" height="14" rx="2"/><path d="M7 3h12a2 2 0 0 1 2 2v12"/></svg>;
+    case 'plus': return <svg {...p}><path d="M12 5v14M5 12h14"/></svg>;
+    case 'users': return <svg {...p}><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14c2.5 0 5 1.5 5 4"/></svg>;
+    case 'user': return <svg {...p}><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>;
+    case 'calendar': return <svg {...p}><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>;
+    case 'arrowLeft': return <svg {...p}><path d="M15 6l-6 6 6 6"/></svg>;
+    case 'arrowRight': return <svg {...p}><path d="m9 6 6 6-6 6"/></svg>;
+    case 'close': return <svg {...p}><path d="M6 6l12 12M18 6 6 18"/></svg>;
+    case 'menu': return <svg {...p}><path d="M4 6h16M4 12h16M4 18h16"/></svg>;
+    case 'logout': return <svg {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>;
+    case 'bell': return <svg {...p}><path d="M6 8a6 6 0 0 1 12 0c0 5 2 7 2 7H4s2-2 2-7M10 19a2 2 0 0 0 4 0"/></svg>;
+    case 'bookmark': return <svg {...p}><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>;
+    case 'sparkles': return <svg {...p}><path d="m12 3 1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9l4.2-1.8zM19 14l.9 2.1L22 17l-2.1.9L19 20l-.9-2.1L16 17l2.1-.9zM5 16l.7 1.6L7.3 18l-1.6.7L5 20.3 4.3 18.7 2.7 18l1.6-.7z"/></svg>;
+    case 'settings': return <svg {...p}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.7l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.7-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.7.3l-.1.1a2 2 0 0 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.7 1.6 1.6 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.7l-.1-.1a2 2 0 0 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.7.3h.1a1.6 1.6 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.7-.3l.1-.1a2 2 0 0 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.7v.1a1.6 1.6 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>;
+    case 'coffee': return <svg {...p}><path d="M3 8h14v6a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z"/><path d="M17 9h2a2 2 0 0 1 0 6h-2M6 2v3M10 2v3M14 2v3"/></svg>;
+    case 'utensils': return <svg {...p}><path d="M5 2v8a2 2 0 0 0 4 0V2M7 10v12M14 2v20M14 8c0-3 3-5 5-5v19"/></svg>;
+    case 'bar': return <svg {...p}><path d="M5 4h14l-2 6a4 4 0 0 1-10 0zM12 14v6M9 20h6"/></svg>;
+    case 'palette': return <svg {...p}><path d="M12 3a9 9 0 0 0 0 18c1 0 1.5-1 1-2-.5-1.2.5-2 1.5-2H17a4 4 0 0 0 4-4 9 9 0 0 0-9-10z"/><circle cx="7.5" cy="10.5" r="1" fill={color}/><circle cx="11" cy="7" r="1" fill={color}/><circle cx="15.5" cy="8.5" r="1" fill={color}/></svg>;
+    case 'leaf': return <svg {...p}><path d="M11 20A7 7 0 0 1 4 13c0-4 4-9 11-9 1 6-2 16-4 16zM4 13c4 0 8 3 7 7"/></svg>;
+    case 'gift': return <svg {...p}><rect x="3" y="9" width="18" height="11" rx="2"/><path d="M3 12h18M12 9v11"/><path d="M8 9c-1.5 0-3-1-3-2.5C5 5 6.5 4 8 5c1.5 1 4 4 4 4s2.5-3 4-4c1.5-1 3 0 3 1.5C19 8 17.5 9 16 9"/></svg>;
+    case 'list': return <svg {...p}><path d="M4 6h16M4 12h16M4 18h16"/></svg>;
+    case 'map': return <svg {...p}><path d="m3 6 6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14"/></svg>;
+    default: return null;
+  }
+};
+
+const SpotaLogo = ({ size = 28, color = SPOTA.c.primary }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+    <Icon name="pinFill" size={size} color={color} />
+    <span style={{ fontFamily: SPOTA.font.ui, fontWeight: 800, fontSize: size * 0.95, color: SPOTA.c.text, letterSpacing: -0.4 }}>
+      Spota
+    </span>
+  </div>
+);
+
+const Btn = ({ children, variant = 'primary', size = 'md', onClick, full, icon, iconRight, style = {} }) => {
+  const sizes = { sm: { h: 36, px: 14, fs: 14, r: 10 }, md: { h: 44, px: 18, fs: 14.5, r: 12 }, lg: { h: 52, px: 22, fs: 16, r: 14 } }[size];
+  const palettes = {
+    primary: { bg: SPOTA.c.primary, c: '#fff', bd: 'transparent', hover: SPOTA.c.primaryDark },
+    secondary: { bg: SPOTA.c.secondary, c: '#fff', bd: 'transparent', hover: SPOTA.c.secondaryDark },
+    outline: { bg: 'transparent', c: SPOTA.c.text, bd: SPOTA.c.line, hover: SPOTA.c.bgAlt },
+    ghost: { bg: 'transparent', c: SPOTA.c.text, bd: 'transparent', hover: SPOTA.c.lineSoft },
+  }[variant];
+  const [hover, setHover] = React.useState(false);
+  return (
+    <button onClick={onClick} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+      style={{
+        height: sizes.h, padding: `0 ${sizes.px}px`, borderRadius: sizes.r,
+        background: hover ? palettes.hover : palettes.bg, color: palettes.c,
+        border: `1px solid ${palettes.bd === 'transparent' ? 'transparent' : palettes.bd}`,
+        fontFamily: SPOTA.font.ui, fontWeight: 600, fontSize: sizes.fs,
+        cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+        width: full ? '100%' : 'auto', transition: 'background 120ms, transform 120ms',
+        transform: hover ? 'translateY(-1px)' : 'none',
+        ...style,
+      }}>
+      {icon && <Icon name={icon} size={18} />}
+      {children}
+      {iconRight && <Icon name={iconRight} size={18} />}
+    </button>
+  );
+};
+
+const Avatar = ({ name, size = 40, score }) => (
+  <div style={{ position: 'relative', display: 'inline-flex' }}>
+    <img src={avatar(name, size * 2)} alt={name}
+      style={{ width: size, height: size, borderRadius: 999, objectFit: 'cover',
+        border: score ? `2px solid ${SPOTA.c.accent}` : `1.5px solid ${SPOTA.c.line}` }} />
+    {score && (
+      <span style={{
+        position: 'absolute', bottom: -2, right: -4,
+        background: SPOTA.c.surface, color: SPOTA.c.text,
+        fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 10,
+        padding: '1px 5px', borderRadius: 999, border: `1px solid ${SPOTA.c.line}`,
+      }}>{score}</span>
+    )}
+  </div>
+);
+
+// Tag — píldora de estado / beneficio (Popular, Nuevo, Recomendado, etc.)
+const Tag = ({ children, kind = 'secondary', icon, style = {} }) => {
+  const palettes = {
+    secondary: { bg: SPOTA.c.secondary, c: '#fff' },
+    accent:    { bg: SPOTA.c.accent, c: '#2B2523' },
+    primary:   { bg: SPOTA.c.primary, c: '#fff' },
+    soft:      { bg: SPOTA.c.secondarySoft, c: SPOTA.c.secondaryDark },
+    softG:     { bg: SPOTA.c.primarySoft, c: SPOTA.c.primaryDark },
+    softA:     { bg: SPOTA.c.accentSoft, c: '#7A5A12' },
+  }[kind];
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 4,
+      padding: '4px 10px', borderRadius: 999,
+      background: palettes.bg, color: palettes.c,
+      fontFamily: SPOTA.font.ui, fontWeight: 600, fontSize: 11.5, letterSpacing: 0.2,
+      ...style,
+    }}>
+      {icon && <Icon name={icon} size={12} />}
+      {children}
+    </span>
+  );
+};
+
+// Proof of Visit — píldora verde con check
+const ProofOfVisit = ({ size = 'sm' }) => {
+  const isLg = size === 'lg';
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 5,
+      padding: isLg ? '6px 12px' : '4px 9px', borderRadius: 999,
+      background: SPOTA.c.primary, color: '#fff',
+      fontFamily: SPOTA.font.ui, fontWeight: 600, fontSize: isLg ? 12.5 : 11,
+      boxShadow: '0 1px 3px rgba(47,111,94,0.2)',
+    }}>
+      <span style={{
+        width: isLg ? 16 : 14, height: isLg ? 16 : 14, borderRadius: 999,
+        background: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <Icon name="check" size={isLg ? 11 : 9} color={SPOTA.c.primary} strokeWidth={3} />
+      </span>
+      Visitado
+    </span>
+  );
+};
+
+// FamaScore — variante classic (usada en cards y detalle)
+const FamaScore = ({ score = 4.7, count = 256, size = 'sm', onDark = false }) => (
+  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+    <Icon name="star" size={size === 'lg' ? 18 : 14} color={SPOTA.c.accent} />
+    <span style={{ fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: size === 'lg' ? 15 : 13, color: onDark ? '#fff' : SPOTA.c.text }}>
+      {score.toFixed(1)}
+    </span>
+    <span style={{ fontFamily: SPOTA.font.ui, fontSize: size === 'lg' ? 14 : 12.5, color: onDark ? 'rgba(255,255,255,0.85)' : SPOTA.c.textSoft }}>
+      ({count})
+    </span>
+  </div>
+);
+
+// PlaceCard — card de lugar (variante desktop con hover lift)
+const PlaceCard = ({ place, onClick, saved, onSave, selected }) => {
+  const [hover, setHover] = React.useState(false);
+  return (
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+      style={{
+        background: SPOTA.c.surface, borderRadius: SPOTA.radius.lg, overflow: 'hidden',
+        border: `1.5px solid ${selected ? SPOTA.c.primary : SPOTA.c.lineSoft}`,
+        boxShadow: hover || selected ? SPOTA.shadow.cardHover : SPOTA.shadow.card,
+        cursor: 'pointer', transform: hover ? 'translateY(-2px)' : 'none',
+        transition: 'transform 200ms, box-shadow 200ms, border-color 150ms',
+      }}>
+      <div style={{ position: 'relative', height: 170, background: SPOTA.c.lineSoft }}>
+        <img src={photo(place.img, 600, 400)} alt={place.name}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        {place.tag && <div style={{ position: 'absolute', top: 10, left: 10 }}><Tag kind="secondary">{place.tag}</Tag></div>}
+        <button onClick={(e) => { e.stopPropagation(); onSave && onSave(); }} style={{
+          position: 'absolute', top: 8, right: 8, width: 36, height: 36, borderRadius: 999,
+          background: 'rgba(255,255,255,0.92)', border: 'none', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Icon name={saved ? 'heartFill' : 'heart'} size={18} color={saved ? SPOTA.c.secondary : SPOTA.c.text} />
+        </button>
+        {place.visited && <div style={{ position: 'absolute', bottom: 10, left: 10 }}><ProofOfVisit /></div>}
+        {place.benefit && <div style={{ position: 'absolute', bottom: 10, right: 10 }}><Tag kind="accent" icon="gift">{place.benefit}</Tag></div>}
+      </div>
+      <div style={{ padding: 14 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+          <h3 style={{ margin: 0, fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 16, color: SPOTA.c.text, lineHeight: 1.2 }}>
+            {place.name}
+          </h3>
+          <span style={{ fontFamily: SPOTA.font.ui, fontWeight: 600, fontSize: 13, color: SPOTA.c.textSoft, whiteSpace: 'nowrap' }}>
+            {place.price}
+          </span>
+        </div>
+        <p style={{ margin: '4px 0 8px', fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.textSoft }}>
+          {place.cat} · {place.hood}
+        </p>
+        <FamaScore score={place.score} count={place.reviews} />
+      </div>
+    </div>
+  );
+};
+
+Object.assign(window, { Icon, SpotaLogo, Btn, Avatar, Tag, ProofOfVisit, FamaScore, PlaceCard });
+</script>
+
+<!-- desktop-shell.jsx -->
+<script type="text/babel" data-presets="react">
+// TopNav: barra fija superior. Reemplaza al TabBar inferior del mobile.
+const NAV_ITEMS = [
+  { id: 'home',        label: 'Descubrir',   icon: 'compass'  },
+  { id: 'collections', label: 'Colecciones', icon: 'bookmark' },
+  { id: 'plans',       label: 'Planes',      icon: 'calendar' },
+  { id: 'profile',     label: 'Perfil',      icon: 'user'     },
+];
+
+const TopNav = ({ current, nav }) => {
+  const [searchFocused, setSearchFocused] = React.useState(false);
+  return (
+    <header style={{
+      position: 'sticky', top: 0, zIndex: 50,
+      background: 'rgba(255, 248, 237, 0.92)', backdropFilter: 'blur(14px)',
+      borderBottom: `1px solid ${SPOTA.c.line}`,
+    }}>
+      <div style={{
+        maxWidth: 1440, margin: '0 auto',
+        padding: '14px 32px',
+        display: 'grid', gridTemplateColumns: 'auto 1fr auto', alignItems: 'center', gap: 32,
+      }}>
+        {/* Logo */}
+        <button onClick={() => nav('home')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
+          <SpotaLogo size={26} />
+        </button>
+
+        {/* Nav central + buscador */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+          <nav style={{ display: 'flex', gap: 4 }}>
+            {NAV_ITEMS.map(it => {
+              const active = current === it.id;
+              return (
+                <button key={it.id} onClick={() => nav(it.id)} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 7,
+                  padding: '8px 14px', borderRadius: 999, cursor: 'pointer',
+                  background: active ? SPOTA.c.primary : 'transparent',
+                  color: active ? '#fff' : SPOTA.c.textSoft,
+                  border: 'none', fontFamily: SPOTA.font.ui, fontWeight: active ? 700 : 600, fontSize: 14,
+                  transition: 'background 150ms',
+                }}>
+                  <Icon name={it.icon} size={17} color={active ? '#fff' : SPOTA.c.textSoft} />
+                  {it.label}
+                </button>
+              );
+            })}
+          </nav>
+
+          {/* Buscador global */}
+          <div style={{
+            flex: 1, maxWidth: 480,
+            display: 'flex', alignItems: 'center', gap: 10,
+            padding: '9px 14px', borderRadius: 999,
+            background: SPOTA.c.surface,
+            border: `1.5px solid ${searchFocused ? SPOTA.c.primary : SPOTA.c.line}`,
+            transition: 'border-color 150ms',
+          }}>
+            <Icon name="search" size={17} color={SPOTA.c.textSoft} />
+            <input
+              type="text"
+              placeholder="Buscar lugares, colecciones, hosts..."
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
+              style={{
+                flex: 1, border: 'none', background: 'transparent', outline: 'none',
+                fontFamily: SPOTA.font.ui, fontSize: 14, color: SPOTA.c.text,
+              }}
+            />
+            <kbd style={{
+              fontFamily: SPOTA.font.ui, fontSize: 11, fontWeight: 600, color: SPOTA.c.textMuted,
+              padding: '2px 6px', borderRadius: 4, border: `1px solid ${SPOTA.c.line}`,
+              background: SPOTA.c.bgAlt,
+            }}>/</kbd>
+          </div>
+        </div>
+
+        {/* Acciones derecha */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <button onClick={() => nav('uikit')} title="UI Kit · Design system de Spota"
+            style={{
+              width: 40, height: 40, borderRadius: 999, border: 'none',
+              background: current === 'uikit' ? SPOTA.c.primarySoft : 'transparent',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+            <Icon name="sparkles" size={18} color={current === 'uikit' ? SPOTA.c.primary : SPOTA.c.textSoft} />
+          </button>
+          <button title="Notificaciones" style={{
+            width: 40, height: 40, borderRadius: 999, border: 'none', background: 'transparent',
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Icon name="bell" size={19} color={SPOTA.c.textSoft} />
+          </button>
+          <button onClick={() => nav('profile')} style={{
+            background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, marginLeft: 4,
+            display: 'flex', alignItems: 'center', gap: 8,
+          }}>
+            <Avatar name="Sol Benítez" size={36} score="87" />
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+};
+
+// DesktopFrame: contenedor general. Hace de wrapper de cualquier pantalla.
+const DesktopFrame = ({ children, current, nav }) => (
+  <div style={{ minHeight: '100vh', background: SPOTA.c.bg, display: 'flex', flexDirection: 'column' }}>
+    <TopNav current={current} nav={nav} />
+    <main style={{ flex: 1, maxWidth: 1440, width: '100%', margin: '0 auto', padding: '24px 32px 48px' }}>
+      {children}
+    </main>
+  </div>
+);
+
+// Guarda para viewports chicos: si la ventana es muy angosta, sugerimos abrir en mobile.
+const SmallViewportGuard = ({ children }) => {
+  const [w, setW] = React.useState(typeof window !== 'undefined' ? window.innerWidth : 1280);
+  React.useEffect(() => {
+    const onResize = () => setW(window.innerWidth);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  if (w < 1024) {
+    return (
+      <div style={{
+        minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 32, background: SPOTA.c.bg,
+      }}>
+        <div style={{
+          maxWidth: 420, padding: 28, borderRadius: 18,
+          background: SPOTA.c.surface, border: `1px solid ${SPOTA.c.line}`, textAlign: 'center',
+        }}>
+          <SpotaLogo size={32} />
+          <h1 style={{ margin: '16px 0 8px', fontFamily: SPOTA.font.ui, fontSize: 20, fontWeight: 700 }}>
+            Esta es la versión <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', color: SPOTA.c.secondary, fontWeight: 500 }}>desktop</span>
+          </h1>
+          <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 14, color: SPOTA.c.textSoft, lineHeight: 1.5 }}>
+            Pensada para pantallas de 1024 px o más. Ampliá la ventana, o abrí el prototipo mobile en{' '}
+            <code style={{ fontFamily: 'ui-monospace, monospace', fontSize: 13, color: SPOTA.c.text }}>prototipo/</code>.
+          </p>
+        </div>
+      </div>
+    );
+  }
+  return children;
+};
+
+Object.assign(window, { TopNav, DesktopFrame, SmallViewportGuard });
+</script>
+
+<!-- screens-designsystem.jsx -->
+<script type="text/babel" data-presets="react">
+// Pantalla de referencia del design system. Accesible vía el ícono ✦ del TopNav.
+// No es parte del producto; vive como referencia permanente de UI/UX.
+const ScreenDesignSystem = ({ current, nav }) => {
+  return (
+    <section>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+        <Icon name="sparkles" size={26} color={SPOTA.c.primary} />
+        <h1 style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 30, fontWeight: 700, letterSpacing: -0.5 }}>
+          UI Kit <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', fontWeight: 500, color: SPOTA.c.secondary }}>de Spota</span>
+        </h1>
+      </div>
+      <p style={{ margin: '0 0 28px', fontFamily: SPOTA.font.ui, fontSize: 15, color: SPOTA.c.textSoft, lineHeight: 1.55, maxWidth: 720 }}>
+        Página de referencia del design system. Documenta paleta, tipografía y primitives.
+        No es parte del flujo de producto; vive acá como tercera URL de consulta de UI/UX, junto al
+        prototipo mobile y al desktop.
+      </p>
+
+      {/* Smoke test: muestra la paleta, los pesos tipográficos y los componentes base para verificar el render. */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+        <div style={{
+          padding: 20, borderRadius: 16, background: SPOTA.c.surface, border: `1px solid ${SPOTA.c.lineSoft}`,
+        }}>
+          <h3 style={{ margin: '0 0 12px', fontFamily: SPOTA.font.ui, fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: SPOTA.c.textMuted }}>Paleta</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
+            {[
+              { c: SPOTA.c.primary, label: 'Primario' },
+              { c: SPOTA.c.secondary, label: 'Secundario' },
+              { c: SPOTA.c.accent, label: 'Acento' },
+              { c: SPOTA.c.bg, label: 'Fondo' },
+              { c: SPOTA.c.text, label: 'Texto' },
+            ].map(s => (
+              <div key={s.label} style={{ textAlign: 'center' }}>
+                <div style={{ height: 48, borderRadius: 10, background: s.c, border: s.c === SPOTA.c.bg ? `1px solid ${SPOTA.c.line}` : 'none' }} />
+                <div style={{ fontFamily: SPOTA.font.ui, fontSize: 11, color: SPOTA.c.textSoft, marginTop: 6 }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={{
+          padding: 20, borderRadius: 16, background: SPOTA.c.surface, border: `1px solid ${SPOTA.c.lineSoft}`,
+        }}>
+          <h3 style={{ margin: '0 0 12px', fontFamily: SPOTA.font.ui, fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: SPOTA.c.textMuted }}>Tipografía</h3>
+          <div style={{ fontFamily: SPOTA.font.ui, fontSize: 22, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.4 }}>
+            ¿Qué hacemos <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', fontWeight: 400, color: SPOTA.c.secondary }}>hoy</span>?
+          </div>
+          <p style={{ margin: '8px 0 0', fontFamily: SPOTA.font.ui, fontSize: 14, color: SPOTA.c.textSoft, lineHeight: 1.5 }}>
+            DM Sans para UI · Fraunces serif italic para acentos cortos.
+          </p>
+        </div>
+
+        <div style={{
+          padding: 20, borderRadius: 16, background: SPOTA.c.surface, border: `1px solid ${SPOTA.c.lineSoft}`,
+        }}>
+          <h3 style={{ margin: '0 0 12px', fontFamily: SPOTA.font.ui, fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: SPOTA.c.textMuted }}>Botones</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-start' }}>
+            <Btn variant="primary" icon="compass">Descubrir lugares</Btn>
+            <Btn variant="secondary" icon="plus">Crear plan</Btn>
+            <Btn variant="outline">Ver más</Btn>
+          </div>
+        </div>
+      </div>
+
+      {/* Sample de PlaceCard */}
+      <div style={{ marginTop: 32 }}>
+        <h3 style={{ margin: '0 0 12px', fontFamily: SPOTA.font.ui, fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: SPOTA.c.textMuted }}>PlaceCard (preview)</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 18, maxWidth: 900 }}>
+          {PLACES.slice(0, 3).map(p => (
+            <PlaceCard key={p.id} place={p} saved={p.id === 'p1'} onSave={() => {}} onClick={() => {}} />
+          ))}
+        </div>
+      </div>
+
+      {/* Estado de fases */}
+      <div style={{ marginTop: 32, padding: 20, borderRadius: 16, background: SPOTA.c.bgAlt, border: `1px dashed ${SPOTA.c.line}` }}>
+        <h3 style={{ margin: '0 0 8px', fontFamily: SPOTA.font.ui, fontSize: 14, fontWeight: 700, color: SPOTA.c.text }}>Estado del prototipo desktop</h3>
+        <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.textSoft, lineHeight: 1.5 }}>
+          <strong style={{ color: SPOTA.c.primary }}>Fase 1.B — Discover desktop</strong>{' '}
+          completada. Próxima: Fase 2 (Detalle de lugar + Colecciones). Plan completo en{' '}
+          <code style={{ fontFamily: 'ui-monospace, monospace', fontSize: 13, color: SPOTA.c.text }}>entrega/plan-desktop.md</code>.
+        </p>
+      </div>
+    </section>
+  );
+};
+
+Object.assign(window, { ScreenDesignSystem });
+</script>
+
+<!-- screens-discover.jsx -->
+<script type="text/babel" data-presets="react">
+// MapView desktop — SVG estilizado tipo plano de Palermo, sin "Buscar en esta zona"
+// (en desktop el mapa siempre está visible).
+const MapView = ({ selected, onSelect }) => {
+  const pins = [
+    { id: 'p1', x: 28, y: 38 }, { id: 'p2', x: 55, y: 22 }, { id: 'p3', x: 72, y: 48 },
+    { id: 'p4', x: 20, y: 62 }, { id: 'p6', x: 62, y: 72 }, { id: 'p7', x: 45, y: 45 },
+    { id: 'p8', x: 82, y: 32 }, { id: 'p9', x: 36, y: 80 },
+  ];
+  const [filter, setFilter] = React.useState('all');
+  const place = PLACES.find(p => p.id === selected);
+
+  return (
+    <div style={{ position: 'relative', height: '100%', minHeight: 600, borderRadius: SPOTA.radius.lg, overflow: 'hidden', border: `1px solid ${SPOTA.c.lineSoft}` }}>
+      <div style={{ position: 'absolute', inset: 0, background: '#EDE7DA' }}>
+        <svg width="100%" height="100%" style={{ position: 'absolute', inset: 0 }} preserveAspectRatio="none" viewBox="0 0 100 100">
+          <ellipse cx="78" cy="18" rx="28" ry="14" fill="#CFE3C0" opacity="0.9" />
+          <text x="78" y="20" textAnchor="middle" fontFamily="DM Sans, sans-serif" fontSize="2.4" fontWeight="600" fill="#5C7A4F" style={{ textTransform: 'uppercase', letterSpacing: '0.3px' }}>Bosques</text>
+          <ellipse cx="12" cy="78" rx="14" ry="9" fill="#CFE3C0" opacity="0.85" />
+          <text x="12" y="80" textAnchor="middle" fontFamily="DM Sans, sans-serif" fontSize="2" fontWeight="600" fill="#5C7A4F">Plaza</text>
+          <path d="M -2 92 Q 30 88 60 90 T 102 86 L 102 102 L -2 102 Z" fill="#B5D6E3" opacity="0.7" />
+          <path d="M 0 50 L 100 46" stroke="#FFFFFF" strokeWidth="2.4" />
+          <path d="M 50 0 L 54 100" stroke="#FFFFFF" strokeWidth="2.4" />
+          <path d="M 0 70 Q 40 65 100 68" stroke="#FFFFFF" strokeWidth="2.2" />
+          {[15, 30, 60, 85].map(y => <line key={'h'+y} x1="0" y1={y} x2="100" y2={y + 2} stroke="#FFFFFF" strokeWidth="0.8" opacity="0.7" />)}
+          {[20, 35, 70, 88].map(x => <line key={'v'+x} x1={x} y1="0" x2={x + 2} y2="100" stroke="#FFFFFF" strokeWidth="0.8" opacity="0.7" />)}
+          {[...Array(6)].map((_, i) => (
+            [...Array(5)].map((__, j) => (
+              <rect key={`b${i}${j}`} x={i * 17 + 2} y={j * 18 + 5} width="13" height="14" fill="#F5EDE0" opacity="0.5" rx="0.6" />
+            ))
+          ))}
+          <text x="30" y="15" textAnchor="middle" fontFamily="DM Sans, sans-serif" fontSize="2.6" fontWeight="700" fill="#8A7960" opacity="0.8" style={{ letterSpacing: '1px', textTransform: 'uppercase' }}>Palermo</text>
+          <text x="80" y="92" textAnchor="middle" fontFamily="DM Sans, sans-serif" fontSize="2.4" fontWeight="700" fill="#8A7960" opacity="0.7" style={{ letterSpacing: '1px', textTransform: 'uppercase' }}>Villa Crespo</text>
+        </svg>
+        {/* Pin "tu ubicación" */}
+        <div style={{ position: 'absolute', left: '48%', top: '52%', transform: 'translate(-50%, -50%)' }}>
+          <div style={{ position: 'absolute', inset: -16, borderRadius: 999, background: SPOTA.c.primary, opacity: 0.18, animation: 'pulse 2s ease-out infinite' }} />
+          <div style={{ width: 18, height: 18, borderRadius: 999, background: SPOTA.c.primary, border: '3px solid #fff', boxShadow: '0 2px 6px rgba(0,0,0,0.2)', position: 'relative' }} />
+        </div>
+        {/* Pins lugares */}
+        {pins.map(p => {
+          const pl = PLACES.find(x => x.id === p.id);
+          if (!pl) return null;
+          const isSel = p.id === selected;
+          return (
+            <button key={p.id} onClick={() => onSelect(p.id)} style={{
+              position: 'absolute', left: p.x + '%', top: p.y + '%',
+              transform: `translate(-50%, -100%) scale(${isSel ? 1.15 : 1})`,
+              border: 'none', background: 'transparent', cursor: 'pointer',
+              transition: 'transform 200ms', zIndex: isSel ? 10 : 1, padding: 0,
+            }}>
+              <div style={{
+                background: isSel ? SPOTA.c.secondary : SPOTA.c.primary,
+                color: '#fff', borderRadius: 999, padding: '5px 9px',
+                fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 12,
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+                boxShadow: isSel ? '0 6px 16px rgba(184,92,56,0.4)' : '0 3px 10px rgba(47,111,94,0.3)',
+                border: '2px solid #fff',
+              }}>
+                <Icon name="star" size={11} color={SPOTA.c.accent} /> {pl.score}
+              </div>
+              <div style={{
+                width: 0, height: 0, margin: '0 auto',
+                borderLeft: '5px solid transparent', borderRight: '5px solid transparent',
+                borderTop: `7px solid ${isSel ? SPOTA.c.secondary : SPOTA.c.primary}`,
+              }} />
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Filtros flotantes */}
+      <div style={{ position: 'absolute', top: 14, left: 14, right: 14, display: 'flex', gap: 6, overflowX: 'auto', zIndex: 5 }}>
+        {[
+          { id: 'all', t: 'Todos' },
+          { id: 'open', t: 'Abre ahora' },
+          { id: 'visited', t: 'Visitados' },
+          { id: 'saved', t: 'Guardados' },
+        ].map(f => {
+          const on = filter === f.id;
+          return (
+            <button key={f.id} onClick={() => setFilter(f.id)} style={{
+              padding: '7px 12px', borderRadius: 999, cursor: 'pointer', whiteSpace: 'nowrap',
+              border: 'none', background: on ? SPOTA.c.text : SPOTA.c.surface,
+              color: on ? '#fff' : SPOTA.c.text,
+              fontFamily: SPOTA.font.ui, fontSize: 12.5, fontWeight: 600,
+              boxShadow: '0 2px 8px rgba(43,37,35,0.12)',
+            }}>{f.t}</button>
+          );
+        })}
+      </div>
+
+      {/* Card del lugar seleccionado, abajo del mapa */}
+      {place && (
+        <div style={{
+          position: 'absolute', bottom: 14, left: 14, right: 14,
+          background: SPOTA.c.surface, borderRadius: 14, padding: 12,
+          display: 'flex', gap: 12, alignItems: 'center', boxShadow: SPOTA.shadow.pop, zIndex: 6,
+        }}>
+          <img src={photo(place.img, 200, 200)} style={{ width: 64, height: 64, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+              <h3 style={{ margin: 0, fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 15, color: SPOTA.c.text }}>{place.name}</h3>
+              <span style={{ fontFamily: SPOTA.font.ui, fontSize: 12.5, color: SPOTA.c.textSoft }}>{place.price}</span>
+            </div>
+            <p style={{ margin: '2px 0 4px', fontFamily: SPOTA.font.ui, fontSize: 12.5, color: SPOTA.c.textSoft }}>{place.cat} · {place.hood} · a 320m</p>
+            <FamaScore score={place.score} count={place.reviews} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ScreenDiscover = ({ nav }) => {
+  const [cat, setCat] = React.useState(null);
+  const [saved, setSaved] = React.useState(['p1']);
+  const [selectedPin, setSelectedPin] = React.useState('p1');
+  const toggleSave = (id) => setSaved(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
+
+  return (
+    <section>
+      {/* Header con saludo + intro */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 20, gap: 16 }}>
+        <div>
+          <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 14, color: SPOTA.c.textSoft }}>Hola Sol 👋</p>
+          <h1 style={{ margin: '4px 0 0', fontFamily: SPOTA.font.ui, fontSize: 32, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.6 }}>
+            ¿Qué hacemos <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', color: SPOTA.c.secondary, fontWeight: 400 }}>hoy</span>?
+          </h1>
+        </div>
+        <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 14, color: SPOTA.c.textSoft }}>
+          <strong style={{ color: SPOTA.c.text }}>{PLACES.length} lugares</strong> alineados a tu perfil
+        </p>
+      </div>
+
+      {/* Chips de categorías */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
+        <button onClick={() => setCat(null)} style={{
+          display: 'inline-flex', alignItems: 'center', gap: 7,
+          padding: '10px 16px', borderRadius: 999, cursor: 'pointer',
+          background: cat === null ? SPOTA.c.primary : SPOTA.c.surface,
+          color: cat === null ? '#fff' : SPOTA.c.text,
+          border: `1.5px solid ${cat === null ? SPOTA.c.primary : SPOTA.c.line}`,
+          fontFamily: SPOTA.font.ui, fontWeight: 600, fontSize: 14,
+        }}>
+          <Icon name="sparkles" size={15} color={cat === null ? '#fff' : SPOTA.c.primary} /> Para vos
+        </button>
+        {CATEGORIES.map(c => {
+          const on = cat === c.id;
+          return (
+            <button key={c.id} onClick={() => setCat(c.id)} style={{
+              display: 'inline-flex', alignItems: 'center', gap: 7,
+              padding: '10px 16px', borderRadius: 999, cursor: 'pointer',
+              background: on ? SPOTA.c.primary : SPOTA.c.surface,
+              color: on ? '#fff' : SPOTA.c.text,
+              border: `1.5px solid ${on ? SPOTA.c.primary : SPOTA.c.line}`,
+              fontFamily: SPOTA.font.ui, fontWeight: 600, fontSize: 14,
+            }}>
+              <Icon name={c.icon} size={15} color={on ? '#fff' : SPOTA.c.textSoft} /> {c.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Layout 2 columnas: lista + mapa */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: 24, alignItems: 'start' }}>
+        {/* Columna izquierda: lista en grid 2 cols */}
+        <div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+            {PLACES.map(p => (
+              <PlaceCard key={p.id} place={p}
+                saved={saved.includes(p.id)} onSave={() => toggleSave(p.id)}
+                selected={selectedPin === p.id}
+                onClick={() => setSelectedPin(p.id)} />
+            ))}
+          </div>
+        </div>
+
+        {/* Columna derecha: mapa sticky */}
+        <div style={{ position: 'sticky', top: 96, height: 'calc(100vh - 120px)' }}>
+          <MapView selected={selectedPin} onSelect={setSelectedPin} />
+        </div>
+      </div>
+    </section>
+  );
+};
+
+Object.assign(window, { ScreenDiscover });
+</script>
+
+<!-- app.jsx -->
+<script type="text/babel" data-presets="react">
+// Pantalla "en construcción" para rutas todavía no implementadas en este protoype.
+const ScreenSoon = ({ current, nav }) => {
+  const meta = NAV_ITEMS.find(n => n.id === current) || { label: current, icon: 'sparkles' };
+  return (
+    <section style={{ padding: '80px 0', textAlign: 'center', maxWidth: 480, margin: '0 auto' }}>
+      <div style={{ width: 72, height: 72, borderRadius: 999, background: SPOTA.c.primarySoft, margin: '0 auto 20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Icon name={meta.icon} size={32} color={SPOTA.c.primary} />
+      </div>
+      <h1 style={{ margin: '0 0 8px', fontFamily: SPOTA.font.ui, fontSize: 26, fontWeight: 700, letterSpacing: -0.4 }}>
+        {meta.label} <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', color: SPOTA.c.secondary, fontWeight: 500 }}>(próxima fase)</span>
+      </h1>
+      <p style={{ margin: '0 0 20px', fontFamily: SPOTA.font.ui, fontSize: 14, color: SPOTA.c.textSoft, lineHeight: 1.55 }}>
+        Esta sección se implementa en una fase posterior del prototipo desktop. Mientras tanto,
+        explorá Discover o el UI Kit.
+      </p>
+      <div style={{ display: 'inline-flex', gap: 10 }}>
+        <Btn variant="primary" icon="compass" onClick={() => nav('home')}>Ir a Descubrir</Btn>
+        <Btn variant="outline" icon="sparkles" onClick={() => nav('uikit')}>Ver UI Kit</Btn>
+      </div>
+    </section>
+  );
+};
+
+const SCREENS = {
+  home:        ScreenDiscover,
+  uikit:       ScreenDesignSystem,
+  collections: ScreenSoon,
+  plans:       ScreenSoon,
+  profile:     ScreenSoon,
+};
+
+function App() {
+  const [current, setCurrent] = React.useState('home');
+  const nav = (id) => setCurrent(id);
+  const Screen = SCREENS[current] || ScreenSoon;
+
+  return (
+    <SmallViewportGuard>
+      <DesktopFrame current={current} nav={nav}>
+        <Screen current={current} nav={nav} />
+      </DesktopFrame>
+    </SmallViewportGuard>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('app'));
+root.render(<App />);
+</script>
+
+</body>
+</html>
