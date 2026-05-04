@@ -4,23 +4,20 @@ Items diferidos durante el prototipado, ordenados por categoría. No es un roadm
 
 ---
 
-## 1. Pantallas pendientes en el prototipo desktop
+## 1. Pantallas pendientes — paridad mobile/desktop
 
-Estas pantallas existen en el mobile y todavía no se portaron al desktop. Hoy ruteán a `ScreenSoon` con label propio para no romper la navegación.
+### Mobile · `editProfile` (auxiliar de CU-04/05)
+- **Estado:** falta. La vieja versión de `ScreenCredentials` mobile mezclaba Nombre / Email / Teléfono / Contraseña en una sola pantalla. Al alinear con el desktop (que separa `editProfile` para datos públicos y `credentials` para datos sensibles), Nombre y Teléfono quedaron sin lugar en mobile.
+- **Acción sugerida:** crear `ScreenEditProfile` mobile con avatar + nombre + username + bio + zona, igual que el desktop. Acceso desde Perfil → Cuenta → "Editar perfil" (sumar entry).
+- **Esfuerzo:** Bajo.
 
-| Pantalla | CU | Origen del trigger | Esfuerzo |
-|---|---|---|---|
-| `login` + `register` + `recover` + `welcome` | CU-01, CU-02, CU-03 | Botón "Volver a entrar" en `loggedOut`. Hoy va a `home` (asume sesión activa). | Medio — modal centrado ~480 px, 4 vistas relacionadas |
-| `createCollection` | CU-10 | Botón "Nueva colección" en `ScreenCollections`. | Bajo — modal con preview + form |
-| `credentials` | CU-05 | Sección Cuenta del perfil. | Bajo — form simple |
-| `editProfile` | (auxiliar de CU-04/05) | Botón "Editar perfil" del header del perfil. | Bajo — form de avatar + nombre + bio + zona |
-| `preferences` | CU-04 | Sección Cuenta del perfil. | Medio — wizard si lo queremos coherente con onboarding mobile |
-| `myExperiences` | CU-09 | Stats del perfil ("12 reseñas", "47 visitados"). | Medio — lista con visibilidad + edit |
+### Desktop — pantallas portadas durante Fase 7 (✅)
 
-**Plan sugerido (Fase 7):**
-- **7.A — Auth desktop:** login + register + recover + welcome juntos. Cierra el loop de "Cerrar sesión → volver a entrar".
-- **7.B — Acciones del perfil:** createCollection + editProfile + credentials. Formularios simples que comparten estructura.
-- **7.C — Perfil completo:** preferences + myExperiences. Más opcional, puede diferirse.
+Las siguientes pantallas se portaron al desktop durante Fase 7 (commits `1d741b1`, `a2e8a05`, `68e1655`) y ya no están pendientes:
+
+- ✅ `login` + `register` + `recover` + `welcome` (Fase 7.A)
+- ✅ `createCollection` + `editProfile` + `credentials` (Fase 7.B)
+- ✅ `preferences` + `myExperiences` (Fase 7.C)
 
 ---
 

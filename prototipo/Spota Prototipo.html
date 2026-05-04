@@ -1851,42 +1851,52 @@ const ScreenPreferences = ({ nav, embedded }) => {
 };
 
 // CU-05: Gestionar credenciales
+// CU-05: Credenciales y privacidad — mismo set de campos que el desktop (email + cambiar contraseña + zona de peligro).
+// Nombre, username, bio y zona viven en editProfile (pendiente en mobile, ver backlog).
 const ScreenCredentials = ({ nav }) => {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: SPOTA.c.bg }}>
-      <AppHeader title="Cuenta y seguridad" leftIcon="arrowLeft" onLeft={() => nav('profile')} />
+      <AppHeader title="Credenciales y privacidad" leftIcon="arrowLeft" onLeft={() => nav('profile')} />
       <div style={{ flex: 1, overflow: 'auto', padding: 20 }}>
-        <div style={{ background: SPOTA.c.surface, borderRadius: 14, padding: 16, marginBottom: 16, border: `1px solid ${SPOTA.c.lineSoft}` }}>
-          <h3 style={{ margin: '0 0 14px', fontFamily: SPOTA.font.ui, fontSize: 15, fontWeight: 700, color: SPOTA.c.text }}>Datos personales</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <Field label="Nombre" value="Sol Benítez" onChange={() => {}} icon="user" />
-            <Field label="Email" type="email" value="sol@spota.com" onChange={() => {}} icon="mail" />
-            <Field label="Teléfono" value="+54 11 5555-1234" onChange={() => {}} hint="Verificado · sólo se muestra a hosts contratados" />
+        {/* Email */}
+        <div style={{ background: SPOTA.c.surface, borderRadius: 14, padding: 16, marginBottom: 12, border: `1px solid ${SPOTA.c.lineSoft}`, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Icon name="mail" size={20} color={SPOTA.c.primary} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h3 style={{ margin: '0 0 2px', fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 14.5, color: SPOTA.c.text }}>Email</h3>
+            <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 12.5, color: SPOTA.c.textSoft, overflow: 'hidden', textOverflow: 'ellipsis' }}>sol.benitez@correo.com</p>
+          </div>
+          <Btn variant="outline" size="sm">Cambiar</Btn>
+        </div>
+
+        {/* Cambiar contraseña */}
+        <div style={{ background: SPOTA.c.surface, borderRadius: 14, padding: 16, marginBottom: 12, border: `1px solid ${SPOTA.c.lineSoft}` }}>
+          <h3 style={{ margin: '0 0 12px', fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 14.5, color: SPOTA.c.text }}>Cambiar contraseña</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <Field label="Contraseña actual" type="password" value="" placeholder="Tu contraseña actual" onChange={() => {}} icon="lock" />
+            <Field label="Contraseña nueva" type="password" value="" placeholder="Mínimo 8 caracteres" onChange={() => {}} icon="lock" />
+            <Field label="Confirmar contraseña" type="password" value="" placeholder="Repetí la nueva" onChange={() => {}} icon="lock" />
+          </div>
+          <div style={{ marginTop: 14 }}>
+            <Btn variant="primary" full icon="check">Actualizar contraseña</Btn>
           </div>
         </div>
-        <div style={{ background: SPOTA.c.surface, borderRadius: 14, padding: 16, marginBottom: 16, border: `1px solid ${SPOTA.c.lineSoft}` }}>
-          <h3 style={{ margin: '0 0 14px', fontFamily: SPOTA.font.ui, fontSize: 15, fontWeight: 700, color: SPOTA.c.text }}>Seguridad</h3>
-          <Field label="Contraseña actual" type="password" value="••••••••••" onChange={() => {}} icon="lock" />
-          <div style={{ height: 12 }} />
-          <Field label="Nueva contraseña" type="password" placeholder="Mínimo 8 caracteres" value="" onChange={() => {}} icon="lock" />
+
+        {/* Zona de peligro */}
+        <div style={{ background: SPOTA.c.surface, borderRadius: 14, padding: 16, border: `1px solid ${SPOTA.c.danger}33` }}>
+          <h3 style={{ margin: '0 0 6px', fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 14.5, color: SPOTA.c.danger }}>Zona de peligro</h3>
+          <p style={{ margin: '0 0 12px', fontFamily: SPOTA.font.ui, fontSize: 12.5, color: SPOTA.c.textSoft, lineHeight: 1.5 }}>
+            Eliminar tu cuenta es irreversible. Vamos a borrar tu perfil, tus reseñas y tus colecciones privadas.
+            Las reseñas públicas quedan como anónimas para preservar la integridad del Fama Score de la comunidad.
+          </p>
+          <button style={{
+            padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
+            background: 'transparent', color: SPOTA.c.danger, border: `1.5px solid ${SPOTA.c.danger}`,
+            fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 13.5,
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+          }}>
+            <Icon name="trash" size={15} color={SPOTA.c.danger} /> Eliminar cuenta
+          </button>
         </div>
-        <div style={{ background: SPOTA.c.surface, borderRadius: 14, padding: 16, marginBottom: 16, border: `1px solid ${SPOTA.c.lineSoft}` }}>
-          <h3 style={{ margin: '0 0 14px', fontFamily: SPOTA.font.ui, fontSize: 15, fontWeight: 700, color: SPOTA.c.text }}>Cuentas vinculadas</h3>
-          {[{ n: 'Google', i: 'google', linked: true, sub: 'sol@gmail.com' }, { n: 'Apple', i: 'apple', linked: false, sub: 'No vinculada' }].map(a => (
-            <div key={a.n} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderTop: `1px solid ${SPOTA.c.lineSoft}` }}>
-              <Icon name={a.i} size={22} color={SPOTA.c.text} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: SPOTA.font.ui, fontWeight: 600, fontSize: 14, color: SPOTA.c.text }}>{a.n}</div>
-                <div style={{ fontFamily: SPOTA.font.ui, fontSize: 12, color: SPOTA.c.textSoft }}>{a.sub}</div>
-              </div>
-              <Btn variant={a.linked ? 'outline' : 'primary'} size="sm">{a.linked ? 'Desvincular' : 'Vincular'}</Btn>
-            </div>
-          ))}
-        </div>
-        <Btn variant="primary" size="lg" full>Guardar cambios</Btn>
-        <button style={{ marginTop: 16, width: '100%', height: 48, border: 'none', background: 'transparent', fontFamily: SPOTA.font.ui, fontSize: 14, fontWeight: 600, color: SPOTA.c.danger, cursor: 'pointer' }}>
-          Eliminar mi cuenta
-        </button>
       </div>
     </div>
   );

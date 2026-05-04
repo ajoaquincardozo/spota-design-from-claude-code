@@ -3212,7 +3212,7 @@ const ScreenRegister = ({ nav }) => {
         </span>
       </label>
       <div style={{ marginTop: 20 }}>
-        <Btn variant="primary" size="lg" full onClick={() => nav('home')}>Crear cuenta</Btn>
+        <Btn variant="primary" size="lg" full onClick={() => nav('preferences', { mode: 'onboarding' })}>Crear cuenta</Btn>
       </div>
     </AuthCard>
   );
@@ -3560,9 +3560,10 @@ Object.assign(window, { ScreenCreateCollection, ScreenEditProfile, ScreenCredent
 
 <!-- screens-prefs-experiences.jsx -->
 <script type="text/babel" data-presets="react">
-// CU-04: Preferencias — desktop como editor de settings, no wizard
-// (el usuario ya tiene prefs guardadas; esta pantalla las edita).
-const ScreenPreferences = ({ nav }) => {
+// CU-04: Preferencias — single page que sirve como onboarding (mode='onboarding')
+// y como editor de settings (mode='edit', default cuando se accede desde Perfil).
+const ScreenPreferences = ({ nav, params }) => {
+  const isOnboarding = params?.mode === 'onboarding';
   const TYPES = [
     { id: 'cafes',    label: 'Cafés',         icon: 'coffee' },
     { id: 'comida',   label: 'Comida',        icon: 'utensils' },
@@ -3596,20 +3597,31 @@ const ScreenPreferences = ({ nav }) => {
 
   return (
     <section>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.textSoft }}>
-        <button onClick={() => nav('profile')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: SPOTA.c.textSoft, fontFamily: SPOTA.font.ui, fontSize: 13, padding: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-          <Icon name="arrowLeft" size={14} /> Perfil
-        </button>
-        <span style={{ color: SPOTA.c.textMuted }}>/</span>
-        <span style={{ color: SPOTA.c.text, fontWeight: 600 }}>Preferencias</span>
-      </div>
+      {!isOnboarding && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.textSoft }}>
+          <button onClick={() => nav('profile')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: SPOTA.c.textSoft, fontFamily: SPOTA.font.ui, fontSize: 13, padding: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <Icon name="arrowLeft" size={14} /> Perfil
+          </button>
+          <span style={{ color: SPOTA.c.textMuted }}>/</span>
+          <span style={{ color: SPOTA.c.text, fontWeight: 600 }}>Preferencias</span>
+        </div>
+      )}
 
       <div style={{ maxWidth: 760 }}>
+        {isOnboarding && (
+          <p style={{ margin: '0 0 6px', fontFamily: SPOTA.font.ui, fontSize: 12.5, fontWeight: 700, color: SPOTA.c.primary, letterSpacing: 0.4, textTransform: 'uppercase' }}>
+            Bienvenida a Spota
+          </p>
+        )}
         <h1 style={{ margin: '0 0 4px', fontFamily: SPOTA.font.ui, fontSize: 28, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.5 }}>
-          Tus <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', color: SPOTA.c.secondary, fontWeight: 400 }}>preferencias</span>
+          {isOnboarding
+            ? <>Antes de <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', color: SPOTA.c.secondary, fontWeight: 400 }}>empezar</span></>
+            : <>Tus <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', color: SPOTA.c.secondary, fontWeight: 400 }}>preferencias</span></>}
         </h1>
         <p style={{ margin: '0 0 24px', fontFamily: SPOTA.font.ui, fontSize: 14.5, color: SPOTA.c.textSoft, lineHeight: 1.5 }}>
-          Spota usa esto para entender qué te puede interesar y para ponderar las reseñas de quienes tienen perfil parecido al tuyo (afinidad cruzada).
+          {isOnboarding
+            ? 'Contanos qué te gusta para que las recomendaciones tengan sentido desde el primer día. Podés cambiarlo cuando quieras desde tu perfil.'
+            : 'Spota usa esto para entender qué te puede interesar y para ponderar las reseñas de quienes tienen perfil parecido al tuyo (afinidad cruzada).'}
         </p>
 
         {/* Tipos de experiencia */}
@@ -3702,11 +3714,15 @@ const ScreenPreferences = ({ nav }) => {
         {/* Footer */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
           <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 12.5, color: SPOTA.c.textMuted, lineHeight: 1.5 }}>
-            Tus cambios afectan las recomendaciones desde la próxima búsqueda.
+            {isOnboarding
+              ? 'Estos valores los podés ajustar después desde tu perfil.'
+              : 'Tus cambios afectan las recomendaciones desde la próxima búsqueda.'}
           </p>
           <div style={{ display: 'flex', gap: 10 }}>
-            <Btn variant="ghost" onClick={() => nav('profile')}>Cancelar</Btn>
-            <Btn variant="primary" size="lg" icon="check" onClick={() => nav('profile')}>Guardar preferencias</Btn>
+            {!isOnboarding && <Btn variant="ghost" onClick={() => nav('profile')}>Cancelar</Btn>}
+            <Btn variant="primary" size="lg" iconRight={isOnboarding ? 'arrowRight' : undefined} icon={!isOnboarding ? 'check' : undefined} onClick={() => nav(isOnboarding ? 'home' : 'profile')}>
+              {isOnboarding ? 'Empezar a explorar' : 'Guardar preferencias'}
+            </Btn>
           </div>
         </div>
       </div>
