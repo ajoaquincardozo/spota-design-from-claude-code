@@ -84,16 +84,17 @@ A crear o actualizar:
 
 ## 7. Fases de implementación
 
-| Fase | Contenido | Outcome |
+| Fase | Contenido | Estado |
 |---|---|---|
-| 1 | Skeleton + design system copiado + TopNav + Discover desktop completo | Pivote visual aprobable |
-| 2 | Detalle de lugar + Colecciones + Detalle de colección | Flujo de descubrimiento completo |
-| 3 | Publicar + Planes (3 pantallas con HostBlock desktop) | Flujo de experiencias y coordinación |
-| 4 | Marketplace de hosts + Crear oferta + Postularse | Flujo de hosts |
-| 5 | Negocios: reclamar / dashboard / beneficios / campañas / insights | Flujo B2B |
-| 6 | Polish: hover unificado, micro-interacciones, ajustes de densidad | Entregable |
+| 1.A | Skeleton + design system + TopNav + UI Kit | Completada |
+| 1.B | Discover desktop con lista + mapa simultáneos | Completada |
+| 2 | Detalle de lugar + Colecciones + Detalle de colección | Completada |
+| 3 | Publicar (3 pasos) + Planes + HostBlock | Completada |
+| 4 | Marketplace de hosts + Crear oferta + Postulaciones + Registrar host + Dashboard | Completada |
+| 5 | Negocios B2B (Registrar, Dashboard, Reclamar, Beneficios, Campañas, Insights) con BizFrame | Completada |
+| 6 | Perfil de usuario + polish (hover unificado, micro-transitions) | Completada |
 
-Estimación: ~1 sesión de trabajo por fase (3-5 horas). Total: 5-6 sesiones.
+**Resultado:** prototipo desktop con paridad funcional sobre las 23 CUs. ~3000 líneas en un único HTML autocontenido. 22 pantallas implementadas + 1 página de referencia (UI Kit).
 
 ## 8. Riesgos y trade-offs
 

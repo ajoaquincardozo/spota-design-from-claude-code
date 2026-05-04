@@ -14,10 +14,11 @@ El mercado objetivo son residentes urbanos de 18 a 45 años en CABA/AMBA, con h�
 
 ## Estado actual del prototipo (mayo 2026)
 
-- **Source of truth en runtime:** `prototipo/Spota Prototipo.html`. Único archivo autocontenido que carga React 18 y Babel-standalone por CDN y compila JSX en el browser. Se levanta con `python3 -m http.server 8000` desde `prototipo/`.
-- **Cobertura:** 31 pantallas implementadas, cubre los 23 CUs definidos más entradas auxiliares (splash, recover full-screen, search results, collection detail, profile).
+- **Source of truth en runtime (mobile):** `prototipo/Spota Prototipo.html`. Único archivo autocontenido que carga React 18 y Babel-standalone por CDN y compila JSX en el browser. Se levanta con `python3 -m http.server 8000` desde `prototipo/`.
+- **Source of truth en runtime (desktop):** `prototipo-desktop/Spota Prototipo Desktop.html`. Mismo enfoque autocontenido. Breakpoint mínimo 1024 px. Se levanta con `python3 -m http.server 8001` desde `prototipo-desktop/`. Cubre los 23 CUs en paralelo al mobile, con TopNav + footer en lugar de TabBar inferior, layouts multi-columna donde aplica, modales en vez de full-screen para acciones cortas, y un panel B2B con `BizFrame` (sidebar dedicado).
+- **Cobertura:** mobile cubre 31 pantallas y desktop 22+ pantallas, ambas sobre los 23 CUs definidos más auxiliares.
 - **Backup histórico:** `template/` conserva el estado original recibido (incluye `.jsx` sueltos que están desfasados respecto al HTML; no se cargan en runtime).
-- **Doc de entrega:** la justificación de las decisiones de diseño (paleta, navegación, regla 5±2, Fitts, etc.) vive en [`entrega/justificacion-diseno.md`](entrega/justificacion-diseno.md). Este `CLAUDE.md` es el brief operativo y la memoria de decisiones; el otro es el documento entregable.
+- **Docs de entrega:** la justificación de las decisiones de diseño compartidas (paleta, navegación, regla 5±2, Fitts, etc.) vive en [`entrega/justificacion-diseno.md`](entrega/justificacion-diseno.md). El plan y las decisiones específicas del desktop están en [`entrega/plan-desktop.md`](entrega/plan-desktop.md). Este `CLAUDE.md` es el brief operativo y la memoria de decisiones.
 - **Material de cátedra y referencia:** `docs/` (excluido del repo por peso, ~60 MB).
 
 ---
@@ -253,5 +254,7 @@ Decisiones tomadas durante el prototipado que no estaban en el brief original. S
 | D8 | **Diagrama de estados del CTA en detalle de lugar:** Disponible → Intención declarada → Visitado → Publicado, con rama de "no verificado" si la ventana de Proof of Visit cierra sin GPS dentro del radio. Reemplaza el contradictorio "Marcar como visitado". Espejo del modelo definido en `docs/Proof_of_Visit_Mecanismo_y_Flujo_de_Experiencia.md`. | Apéndice §7 |
 | D9 | **Wizard publicar de 3 pasos (no 4):** se elimina el paso de "validando presencia por GPS" porque el Proof of Visit ya se resolvió en background. Paso 1 ahora lista solamente visitas validadas pendientes de reseñar; pasos 2 y 3 son valoración + reseña + chips y visibilidad + rating de host. | Apéndice §8 |
 | D10 | **Sub-máquina del host dentro del plan grupal:** dos estados (*Sin host* — default sin etiqueta visible — y *Con host* — card visible con avatar/Fama/propuesta), transición irreversible (no hay cancelación). El bloque vive como slot persistente en `ScreenCreatePlan`, `ScreenPlanVote` y `ScreenPlanClose`. Reemplaza el teaser del Marketplace en Discover, que se elimina. Solo el creador del plan opera la sub-máquina. | Apéndice §9 |
+| D11 | **Prototipo desktop como archivo separado, no responsive del mobile:** vive en `prototipo-desktop/`, mismo stack autocontenido. Adaptar el mobile vía media queries forzaba layouts; un prototipo nuevo permite recomponer con libertad sin contaminar el mobile estable. Si en una segunda fase se quiere consolidar, se puede extraer un `design-system.js` común. | Plan-desktop §2 |
+| D12 | **Discover desktop = lista + mapa simultáneos, no toggle:** la pantalla pivote del desktop usa dos columnas (lista 60 % a la izquierda, mapa SVG 40 % sticky a la derecha). El toggle Lista/Mapa del mobile no aplica porque hay espacio para ambos. Sincronización bidireccional: click en card resalta el pin, click en pin muestra card flotante. | Plan-desktop §3 |
 
 Cuando se tome una nueva decisión que afecte la marca, la navegación o la jerarquía visual: se suma una fila acá con el resumen y se profundiza la justificación en el doc de entrega.
