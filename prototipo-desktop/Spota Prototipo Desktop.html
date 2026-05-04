@@ -212,6 +212,7 @@ const Icon = ({ name, size = 24, color = 'currentColor', strokeWidth = 1.75, fil
     case 'eyeOff': return <svg {...p}><path d="M3 3l18 18M10.6 6.1A10 10 0 0 1 12 6c6.5 0 10 6 10 6a17 17 0 0 1-3.1 4M6.6 6.6C3.6 8.4 2 12 2 12s3.5 7 10 7c1.7 0 3.2-.4 4.6-1.1M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>;
     case 'apple': return <svg {...p} fill={color} stroke="none"><path d="M17.5 12.5c0-2.5 2-3.5 2-3.5-1-1.5-3-1.5-4-1.5-1.5 0-3 1-4 1s-2.5-1-4-1c-2 0-4 1.5-4 4.5 0 4 3 9 5 9 1 0 1.5-.5 3-.5s2 .5 3 .5c2 0 4-3.5 4-3.5-3-1.5-1-5-1-5zM14 4c.5-1 .5-2.5-.5-3.5-1 0-2 .5-2.5 1.5-.5 1-.5 2.5.5 3.5 1 0 2-.5 2.5-1.5z"/></svg>;
     case 'google': return <svg {...p} stroke="none" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.5 12.3c0-.9-.1-1.5-.2-2.2H12v4.1h6c-.1 1-.8 2.5-2.2 3.5l3.4 2.7c2-1.9 3.3-4.6 3.3-8.1z"/><path fill="#34A853" d="M12 23c3 0 5.5-1 7.3-2.7l-3.4-2.7c-1 .7-2.3 1.1-3.9 1.1-3 0-5.5-2-6.4-4.7L2.1 16c1.7 3.4 5.3 7 9.9 7z"/><path fill="#FBBC04" d="M5.6 14c-.2-.7-.4-1.4-.4-2.1s.1-1.4.4-2.1L2.1 7.1C1.4 8.6 1 10.2 1 12s.4 3.4 1.1 4.9z"/><path fill="#EA4335" d="M12 5.2c2.1 0 3.6.9 4.4 1.7L19.5 4C17.5 2.1 14.9 1 12 1 7.4 1 3.8 4.6 2.1 8L5.6 11c.9-2.7 3.4-5.8 6.4-5.8z"/></svg>;
+    case 'trash': return <svg {...p}><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M5 6l1 14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-14"/></svg>;
     default: return null;
   }
 };
@@ -3261,15 +3262,360 @@ const ScreenRecover = ({ nav }) => {
 Object.assign(window, { ScreenWelcome, ScreenLogin, ScreenRegister, ScreenRecover });
 </script>
 
+<!-- screens-profile-actions.jsx -->
+<script type="text/babel" data-presets="react">
+// Helpers locales para formularios consistentes
+const FormField = ({ label, icon, type = 'text', value, onChange, placeholder, hint }) => (
+  <div>
+    <label style={{ display: 'block', marginBottom: 6, fontFamily: SPOTA.font.ui, fontSize: 13, fontWeight: 600, color: SPOTA.c.textSoft }}>{label}</label>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 14px', height: 46, borderRadius: 12, background: SPOTA.c.surface, border: `1.5px solid ${SPOTA.c.line}` }}>
+      {icon && <Icon name={icon} size={17} color={SPOTA.c.textSoft} />}
+      <input type={type} defaultValue={value} placeholder={placeholder}
+        onChange={(e) => onChange && onChange(e.target.value)}
+        style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', fontFamily: SPOTA.font.ui, fontSize: 14.5, color: SPOTA.c.text }} />
+    </div>
+    {hint && <p style={{ margin: '6px 0 0', fontFamily: SPOTA.font.ui, fontSize: 12, color: SPOTA.c.textMuted, lineHeight: 1.4 }}>{hint}</p>}
+  </div>
+);
+
+const Toggle = ({ on, onChange }) => (
+  <button onClick={() => onChange(!on)} style={{
+    width: 48, height: 28, borderRadius: 999, border: 'none', cursor: 'pointer',
+    background: on ? SPOTA.c.primary : SPOTA.c.line, position: 'relative', transition: 'background 200ms', flexShrink: 0,
+  }}>
+    <div style={{ position: 'absolute', top: 3, left: on ? 23 : 3, width: 22, height: 22, borderRadius: 999, background: '#fff', transition: 'left 200ms', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
+  </button>
+);
+
+// CU-10: Crear colección — desktop con preview en vivo
+const ScreenCreateCollection = ({ nav }) => {
+  const themes = [
+    { id: 'umbrella', t: 'Lluvia' },
+    { id: 'utensils', t: 'Comida' },
+    { id: 'sparkles', t: 'Fiesta' },
+    { id: 'coffee',   t: 'Brunch' },
+    { id: 'leaf',     t: 'Aire libre' },
+    { id: 'palette',  t: 'Arte' },
+    { id: 'wineglass',t: 'Tragos' },
+    { id: 'moon',     t: 'Noche' },
+  ];
+  const [name, setName] = React.useState('Sábado lluvioso');
+  const [desc, setDesc] = React.useState('');
+  const [theme, setTheme] = React.useState('umbrella');
+  const [pub, setPub] = React.useState(true);
+  const [places, setPlaces] = React.useState(['p1', 'p2']);
+  const togglePlace = (id) => setPlaces(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
+
+  const previewCollection = {
+    name: name || 'Sin nombre',
+    cover: PLACES.find(p => places.includes(p.id))?.img || 'cafePalermo',
+    themeIcon: theme,
+    by: 'Vos',
+    public: pub,
+    count: places.length,
+  };
+
+  return (
+    <section>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.textSoft }}>
+        <button onClick={() => nav('collections')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: SPOTA.c.textSoft, fontFamily: SPOTA.font.ui, fontSize: 13, padding: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <Icon name="arrowLeft" size={14} /> Colecciones
+        </button>
+        <span style={{ color: SPOTA.c.textMuted }}>/</span>
+        <span style={{ color: SPOTA.c.text, fontWeight: 600 }}>Nueva colección</span>
+      </div>
+
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 28, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.5 }}>
+          Nueva <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', color: SPOTA.c.secondary, fontWeight: 400 }}>colección</span>
+        </h1>
+        <p style={{ margin: '4px 0 0', fontFamily: SPOTA.font.ui, fontSize: 14, color: SPOTA.c.textSoft }}>
+          Agrupá lugares por tema. Pueden ser privadas para vos o compartidas con la comunidad.
+        </p>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: 32, alignItems: 'start' }}>
+        {/* Form */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          <FormField label="Nombre" value={name} onChange={setName} placeholder="Sábado lluvioso, Brunch dominical, Plan económico..." />
+
+          <div>
+            <label style={{ display: 'block', marginBottom: 8, fontFamily: SPOTA.font.ui, fontSize: 13, fontWeight: 600, color: SPOTA.c.textSoft }}>Tema</label>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {themes.map(it => {
+                const on = theme === it.id;
+                return (
+                  <button key={it.id} onClick={() => setTheme(it.id)} title={it.t} style={{
+                    width: 56, height: 56, borderRadius: 14,
+                    border: `1.5px solid ${on ? SPOTA.c.primary : SPOTA.c.line}`,
+                    background: on ? SPOTA.c.primarySoft : SPOTA.c.surface,
+                    cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
+                    transition: 'background 150ms, border-color 150ms',
+                  }}>
+                    <Icon name={it.id} size={22} color={on ? SPOTA.c.primary : SPOTA.c.secondary} strokeWidth={1.9} />
+                    <span style={{ fontFamily: SPOTA.font.ui, fontSize: 9.5, fontWeight: on ? 700 : 500, color: on ? SPOTA.c.primary : SPOTA.c.textSoft }}>{it.t}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: 6, fontFamily: SPOTA.font.ui, fontSize: 13, fontWeight: 600, color: SPOTA.c.textSoft }}>Descripción <span style={{ fontWeight: 400, color: SPOTA.c.textMuted }}>(opcional)</span></label>
+            <textarea value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Una pequeña descripción de qué tienen en común estos lugares..." style={{
+              width: '100%', minHeight: 90, padding: 14, borderRadius: 12, boxSizing: 'border-box',
+              border: `1.5px solid ${SPOTA.c.line}`, background: SPOTA.c.surface,
+              fontFamily: SPOTA.font.ui, fontSize: 14, color: SPOTA.c.text, resize: 'vertical', outline: 'none',
+            }} />
+          </div>
+
+          {/* Visibilidad */}
+          <div>
+            <label style={{ display: 'block', marginBottom: 8, fontFamily: SPOTA.font.ui, fontSize: 13, fontWeight: 600, color: SPOTA.c.textSoft }}>Visibilidad</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {[
+                { id: true, i: 'globe', t: 'Pública', s: 'Cualquiera puede verla y guardarla' },
+                { id: false, i: 'lock', t: 'Privada', s: 'Sólo vos la ves' },
+              ].map(o => {
+                const on = pub === o.id;
+                return (
+                  <button key={String(o.id)} onClick={() => setPub(o.id)} style={{
+                    padding: 14, borderRadius: 12, cursor: 'pointer', textAlign: 'left',
+                    background: on ? SPOTA.c.primarySoft : SPOTA.c.surface,
+                    border: `1.5px solid ${on ? SPOTA.c.primary : SPOTA.c.lineSoft}`,
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                      <Icon name={o.i} size={17} color={on ? SPOTA.c.primary : SPOTA.c.textSoft} />
+                      <span style={{ fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 14, color: SPOTA.c.text }}>{o.t}</span>
+                      {on && <Icon name="checkCircle" size={16} color={SPOTA.c.primary} style={{ marginLeft: 'auto' }} />}
+                    </div>
+                    <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 12.5, color: SPOTA.c.textSoft }}>{o.s}</p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Lugares */}
+          <div>
+            <label style={{ display: 'block', marginBottom: 8, fontFamily: SPOTA.font.ui, fontSize: 13, fontWeight: 600, color: SPOTA.c.textSoft }}>
+              Lugares <span style={{ fontWeight: 400, color: SPOTA.c.textMuted }}>({places.length} elegidos)</span>
+            </label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {PLACES.slice(0, 6).map(p => {
+                const on = places.includes(p.id);
+                return (
+                  <button key={p.id} onClick={() => togglePlace(p.id)} style={{
+                    display: 'flex', alignItems: 'center', gap: 12, padding: 10, borderRadius: 12, textAlign: 'left',
+                    background: on ? SPOTA.c.primarySoft : SPOTA.c.surface,
+                    border: `1.5px solid ${on ? SPOTA.c.primary : SPOTA.c.lineSoft}`,
+                    cursor: 'pointer',
+                  }}>
+                    <img src={photo(p.img, 200, 200)} style={{ width: 48, height: 48, borderRadius: 10, objectFit: 'cover' }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 14, color: SPOTA.c.text }}>{p.name}</div>
+                      <div style={{ fontFamily: SPOTA.font.ui, fontSize: 12, color: SPOTA.c.textSoft }}>{p.cat} · {p.hood}</div>
+                    </div>
+                    <div style={{ width: 26, height: 26, borderRadius: 8, background: on ? SPOTA.c.primary : 'transparent', border: `1.5px solid ${on ? SPOTA.c.primary : SPOTA.c.line}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {on && <Icon name="check" size={15} color="#fff" strokeWidth={3} />}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Footer actions */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 8, paddingTop: 18, borderTop: `1px solid ${SPOTA.c.lineSoft}` }}>
+            <Btn variant="ghost" onClick={() => nav('collections')}>Cancelar</Btn>
+            <Btn variant="primary" size="lg" icon="check" onClick={() => nav('collections')}>Crear colección</Btn>
+          </div>
+        </div>
+
+        {/* Preview en vivo */}
+        <aside style={{ position: 'sticky', top: 96 }}>
+          <p style={{ margin: '0 0 10px', fontFamily: SPOTA.font.ui, fontSize: 11, fontWeight: 700, color: SPOTA.c.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 }}>Vista previa</p>
+          <CollectionCard collection={previewCollection} onClick={() => {}} />
+          <p style={{ margin: '14px 0 0', fontFamily: SPOTA.font.ui, fontSize: 12, color: SPOTA.c.textMuted, lineHeight: 1.5 }}>
+            Así se va a ver tu colección {pub ? 'en la comunidad' : 'en tu perfil'} cuando la guardes.
+          </p>
+        </aside>
+      </div>
+    </section>
+  );
+};
+
+// Editar perfil — auxiliar de CU-04 / CU-05
+const ScreenEditProfile = ({ nav }) => (
+  <section>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.textSoft }}>
+      <button onClick={() => nav('profile')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: SPOTA.c.textSoft, fontFamily: SPOTA.font.ui, fontSize: 13, padding: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+        <Icon name="arrowLeft" size={14} /> Perfil
+      </button>
+      <span style={{ color: SPOTA.c.textMuted }}>/</span>
+      <span style={{ color: SPOTA.c.text, fontWeight: 600 }}>Editar perfil</span>
+    </div>
+
+    <div style={{ maxWidth: 720 }}>
+      <h1 style={{ margin: '0 0 4px', fontFamily: SPOTA.font.ui, fontSize: 28, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.5 }}>Editar perfil</h1>
+      <p style={{ margin: '0 0 24px', fontFamily: SPOTA.font.ui, fontSize: 14, color: SPOTA.c.textSoft }}>Esta info es la que ve la comunidad. Tu email y contraseña se editan en Credenciales.</p>
+
+      {/* Foto */}
+      <div style={{ background: SPOTA.c.surface, borderRadius: 16, padding: 20, marginBottom: 14, border: `1px solid ${SPOTA.c.lineSoft}`, display: 'flex', alignItems: 'center', gap: 18 }}>
+        <Avatar name="Sol Benítez" size={80} score="87" />
+        <div style={{ flex: 1 }}>
+          <h3 style={{ margin: '0 0 4px', fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 15, color: SPOTA.c.text }}>Foto de perfil</h3>
+          <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.textSoft }}>JPG o PNG, máximo 4MB. Cuadrada queda mejor.</p>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Btn variant="outline" icon="photo">Cambiar</Btn>
+          <Btn variant="ghost">Quitar</Btn>
+        </div>
+      </div>
+
+      {/* Datos */}
+      <div style={{ background: SPOTA.c.surface, borderRadius: 16, padding: 20, marginBottom: 14, border: `1px solid ${SPOTA.c.lineSoft}`, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <h3 style={{ margin: 0, fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 15, color: SPOTA.c.text }}>Datos públicos</h3>
+        <FormField label="Nombre" value="Sol Benítez" placeholder="Cómo te ven los demás" />
+        <FormField label="Username" value="solbenitez" icon="user" hint="Tu @ único en Spota. Solo letras, números y guiones bajos." />
+        <div>
+          <label style={{ display: 'block', marginBottom: 6, fontFamily: SPOTA.font.ui, fontSize: 13, fontWeight: 600, color: SPOTA.c.textSoft }}>Bio <span style={{ fontWeight: 400, color: SPOTA.c.textMuted }}>(opcional)</span></label>
+          <textarea defaultValue="Foodie de Palermo. Me gustan los cafés con buen tostado, los bares chiquitos y los paseos sin apuro." style={{
+            width: '100%', minHeight: 80, padding: 14, borderRadius: 12, boxSizing: 'border-box',
+            border: `1.5px solid ${SPOTA.c.line}`, background: SPOTA.c.bg,
+            fontFamily: SPOTA.font.ui, fontSize: 14, color: SPOTA.c.text, resize: 'vertical', outline: 'none',
+          }} />
+          <p style={{ margin: '6px 0 0', fontFamily: SPOTA.font.ui, fontSize: 12, color: SPOTA.c.textMuted }}>140 caracteres como máximo.</p>
+        </div>
+        <FormField label="Zona principal" value="Palermo" icon="pin" hint="Aparece junto a tu nombre y se usa para sugerirte planes cerca." />
+      </div>
+
+      {/* Footer actions */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+        <Btn variant="ghost" onClick={() => nav('profile')}>Cancelar</Btn>
+        <Btn variant="primary" size="lg" icon="check" onClick={() => nav('profile')}>Guardar cambios</Btn>
+      </div>
+    </div>
+  </section>
+);
+
+// CU-05: Credenciales y privacidad
+const ScreenCredentials = ({ nav }) => {
+  const [pubReviews, setPubReviews] = React.useState(true);
+  const [showHood, setShowHood] = React.useState(true);
+  return (
+    <section>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.textSoft }}>
+        <button onClick={() => nav('profile')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: SPOTA.c.textSoft, fontFamily: SPOTA.font.ui, fontSize: 13, padding: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <Icon name="arrowLeft" size={14} /> Perfil
+        </button>
+        <span style={{ color: SPOTA.c.textMuted }}>/</span>
+        <span style={{ color: SPOTA.c.text, fontWeight: 600 }}>Credenciales y privacidad</span>
+      </div>
+
+      <div style={{ maxWidth: 720 }}>
+        <h1 style={{ margin: '0 0 4px', fontFamily: SPOTA.font.ui, fontSize: 28, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.5 }}>
+          Credenciales y <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', color: SPOTA.c.secondary, fontWeight: 400 }}>privacidad</span>
+        </h1>
+        <p style={{ margin: '0 0 24px', fontFamily: SPOTA.font.ui, fontSize: 14, color: SPOTA.c.textSoft }}>Datos sensibles de tu cuenta y cómo se ven tus reseñas.</p>
+
+        {/* Email */}
+        <div style={{ background: SPOTA.c.surface, borderRadius: 16, padding: 20, marginBottom: 14, border: `1px solid ${SPOTA.c.lineSoft}`, display: 'flex', alignItems: 'center', gap: 14 }}>
+          <Icon name="mail" size={20} color={SPOTA.c.primary} />
+          <div style={{ flex: 1 }}>
+            <h3 style={{ margin: '0 0 2px', fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 14.5, color: SPOTA.c.text }}>Email</h3>
+            <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.textSoft }}>sol.benitez@correo.com</p>
+          </div>
+          <Btn variant="outline">Cambiar email</Btn>
+        </div>
+
+        {/* Contraseña */}
+        <div style={{ background: SPOTA.c.surface, borderRadius: 16, padding: 20, marginBottom: 14, border: `1px solid ${SPOTA.c.lineSoft}` }}>
+          <h3 style={{ margin: '0 0 14px', fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 14.5, color: SPOTA.c.text }}>Cambiar contraseña</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <FormField label="Contraseña actual" type="password" icon="lock" placeholder="Tu contraseña actual" />
+            <FormField label="Contraseña nueva" type="password" icon="lock" placeholder="Mínimo 8 caracteres" />
+            <FormField label="Confirmar contraseña" type="password" icon="lock" placeholder="Repetí la nueva" />
+          </div>
+          <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
+            <Btn variant="primary" icon="check">Actualizar contraseña</Btn>
+          </div>
+        </div>
+
+        {/* Sesiones */}
+        <div style={{ background: SPOTA.c.surface, borderRadius: 16, padding: 20, marginBottom: 14, border: `1px solid ${SPOTA.c.lineSoft}` }}>
+          <h3 style={{ margin: '0 0 14px', fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 14.5, color: SPOTA.c.text }}>Sesiones activas</h3>
+          {[
+            { device: 'Mac · Safari · CABA', when: 'Activa ahora', current: true },
+            { device: 'iPhone 15 · Spota app · CABA', when: 'Hace 2 horas', current: false },
+            { device: 'Chrome · Buenos Aires', when: 'Hace 5 días', current: false },
+          ].map((s, i) => (
+            <div key={i} style={{
+              display: 'flex', alignItems: 'center', gap: 14,
+              padding: '12px 0', borderTop: i === 0 ? 'none' : `1px solid ${SPOTA.c.lineSoft}`,
+            }}>
+              <div style={{ width: 10, height: 10, borderRadius: 999, background: s.current ? SPOTA.c.success : SPOTA.c.line, flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: SPOTA.font.ui, fontWeight: 600, fontSize: 13.5, color: SPOTA.c.text }}>
+                  {s.device} {s.current && <span style={{ fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 11, color: SPOTA.c.success, marginLeft: 6 }}>· Este dispositivo</span>}
+                </div>
+                <div style={{ fontFamily: SPOTA.font.ui, fontSize: 12, color: SPOTA.c.textSoft, marginTop: 2 }}>{s.when}</div>
+              </div>
+              {!s.current && <Btn variant="ghost" size="sm">Cerrar sesión</Btn>}
+            </div>
+          ))}
+        </div>
+
+        {/* Privacidad */}
+        <div style={{ background: SPOTA.c.surface, borderRadius: 16, padding: 20, marginBottom: 14, border: `1px solid ${SPOTA.c.lineSoft}` }}>
+          <h3 style={{ margin: '0 0 14px', fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 14.5, color: SPOTA.c.text }}>Privacidad</h3>
+          {[
+            { label: 'Reseñas públicas por defecto', sub: 'Cuando publiques una reseña va a ser visible para la comunidad. Podés cambiarlo por reseña.', on: pubReviews, set: setPubReviews },
+            { label: 'Mostrar mi zona en perfil público', sub: 'Tu barrio aparece junto a tu nombre. No se muestra dirección exacta nunca.', on: showHood, set: setShowHood },
+          ].map((o, i) => (
+            <div key={o.label} style={{
+              display: 'flex', alignItems: 'center', gap: 14,
+              padding: '14px 0', borderTop: i === 0 ? 'none' : `1px solid ${SPOTA.c.lineSoft}`,
+            }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: SPOTA.font.ui, fontWeight: 600, fontSize: 13.5, color: SPOTA.c.text }}>{o.label}</div>
+                <p style={{ margin: '2px 0 0', fontFamily: SPOTA.font.ui, fontSize: 12.5, color: SPOTA.c.textSoft, lineHeight: 1.45 }}>{o.sub}</p>
+              </div>
+              <Toggle on={o.on} onChange={o.set} />
+            </div>
+          ))}
+        </div>
+
+        {/* Zona de peligro */}
+        <div style={{ background: SPOTA.c.surface, borderRadius: 16, padding: 20, border: `1px solid ${SPOTA.c.danger}33` }}>
+          <h3 style={{ margin: '0 0 6px', fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 14.5, color: SPOTA.c.danger }}>Zona de peligro</h3>
+          <p style={{ margin: '0 0 14px', fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.textSoft, lineHeight: 1.5 }}>
+            Eliminar tu cuenta es irreversible. Vamos a borrar tu perfil, tus reseñas y tus colecciones privadas.
+            Las reseñas públicas quedan como anónimas para preservar la integridad del Fama Score de la comunidad.
+          </p>
+          <button style={{
+            padding: '10px 16px', borderRadius: 10, cursor: 'pointer',
+            background: 'transparent', color: SPOTA.c.danger, border: `1.5px solid ${SPOTA.c.danger}`,
+            fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 13.5,
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+          }}>
+            <Icon name="trash" size={15} color={SPOTA.c.danger} /> Eliminar cuenta
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+Object.assign(window, { ScreenCreateCollection, ScreenEditProfile, ScreenCredentials });
+</script>
+
 <!-- app.jsx -->
 <script type="text/babel" data-presets="react">
 // Metadata para pantallas que aún no están implementadas pero deben tener label propio en ScreenSoon.
 const SCREEN_META = {
-  preferences:      { label: 'Preferencias', icon: 'sparkles' },
-  credentials:      { label: 'Credenciales y privacidad', icon: 'lock' },
-  createCollection: { label: 'Nueva colección', icon: 'plus' },
-  editProfile:      { label: 'Editar perfil', icon: 'edit' },
-  myExperiences:    { label: 'Mis experiencias', icon: 'compass' },
+  preferences:   { label: 'Preferencias', icon: 'sparkles' },
+  myExperiences: { label: 'Mis experiencias', icon: 'compass' },
 };
 
 // Pantalla "en construcción" para rutas todavía no implementadas en este prototipo.
@@ -3323,11 +3669,12 @@ const SCREENS = {
   login:            ScreenLogin,
   register:         ScreenRegister,
   recover:          ScreenRecover,
-  // Próxima fase — placeholders con label propio
+  // Acciones del perfil (Fase 7.B)
+  createCollection: ScreenCreateCollection,
+  editProfile:      ScreenEditProfile,
+  credentials:      ScreenCredentials,
+  // Pendientes — placeholders con label propio
   preferences:      ScreenSoon,
-  credentials:      ScreenSoon,
-  createCollection: ScreenSoon,
-  editProfile:      ScreenSoon,
   myExperiences:    ScreenSoon,
 };
 
