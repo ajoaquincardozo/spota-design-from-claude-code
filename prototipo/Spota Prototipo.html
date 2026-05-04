@@ -994,7 +994,99 @@ const SEARCH_PLACEHOLDERS = [
   'after office en San Telmo...',
 ];
 
-Object.assign(window, { PLACES, REVIEWS, HOSTS, COLLECTIONS, PLAN_OPTIONS, CATEGORIES, SEARCH_PLACEHOLDERS });
+// Reviewers "afines" mock — gente con perfil similar al del usuario.
+// Se usan en PlaceCard para mostrar "recomendado por gente como vos".
+const AFFINE_REVIEWERS = {
+  p1:  ['Mati R.', 'Lu G.', 'Tomás S.'],
+  p2:  ['Sofía M.', 'Lu G.'],
+  p3:  ['Cami P.', 'Mati R.', 'Andrés L.'],
+  p6:  ['Tomás S.', 'Sofía M.'],
+  p7:  ['Lu G.', 'Cami P.'],
+  p8:  ['Andrés L.'],
+  p10: ['Sofía M.', 'Mati R.'],
+  p11: ['Cami P.', 'Tomás S.', 'Andrés L.'],
+};
+
+// Etiqueta cualitativa de afinidad sobre PLACE.affinity (numérico 0-100).
+function affinityLabel(score) {
+  if (score == null) return null;
+  if (score >= 88) return { label: 'Alto match',    tone: 'primary' };
+  if (score >= 78) return { label: 'Buen match',    tone: 'soft'    };
+  return null;
+}
+
+// ─────────────────────────────────────────────────────────────
+// interpretQuery — heurística que extrae dimensiones de una query libre.
+// Es deliberadamente simple: el prototipo demuestra el patrón, no el modelo.
+// Devuelve { ambiente?, compania?, momento?, categoria?, zona? } con cada
+// dimensión como string (lo que se mostrará en los chips).
+// ─────────────────────────────────────────────────────────────
+function interpretQuery(text) {
+  if (!text) return {};
+  const t = text.toLowerCase();
+  const out = {};
+
+  // ambiente — incluye también micro-intenciones (charlar, trabajar)
+  const ambiente = [
+    { kw: ['tranquilo', 'tranqui', 'relajado', 'silencioso', 'tranquila'], v: 'tranquilo' },
+    { kw: ['romántico', 'romántica', 'romantico', 'romantica', 'íntimo', 'intimo'], v: 'romántico' },
+    { kw: ['movido', 'fiesta', 'after', 'after office', 'ruidoso'],     v: 'movido' },
+    { kw: ['charlar', 'conversar'],                                       v: 'charlar' },
+    { kw: ['trabajar', 'wifi', 'laburar', 'remoto'],                      v: 'trabajar' },
+    { kw: ['económico', 'economico', 'barato', 'low cost'],               v: 'económico' },
+  ];
+  for (const a of ambiente) if (a.kw.some(k => t.includes(k))) { out.ambiente = a.v; break; }
+
+  // compañía — el plural va antes del singular para que "amigos" no matchee "amigo"
+  const compania = [
+    { kw: ['con amigas'],                              v: 'con amigas' },
+    { kw: ['con una amiga', 'con amiga', 'una amiga'], v: 'con amiga'  },
+    { kw: ['con amigos'],                              v: 'con amigos' },
+    { kw: ['con un amigo', 'con amigo', 'un amigo'],   v: 'con amigo'  },
+    { kw: ['en pareja', 'mi pareja', 'cita'],          v: 'pareja'     },
+    { kw: ['en familia', 'con mi familia'],            v: 'familia'    },
+    { kw: ['en grupo', 'grupo'],                       v: 'grupo'      },
+    { kw: ['solo', 'sola'],                            v: 'solo'       },
+  ];
+  for (const c of compania) if (c.kw.some(k => t.includes(k))) { out.compania = c.v; break; }
+
+  // momento
+  const momento = [
+    { kw: ['hoy'],                          v: 'hoy'      },
+    { kw: ['mañana', 'manana'],             v: 'mañana'   },
+    { kw: ['esta noche', 'a la noche'],     v: 'esta noche' },
+    { kw: ['esta tarde', 'a la tarde'],     v: 'esta tarde' },
+    { kw: ['lunes'],   v: 'lunes'   },
+    { kw: ['martes'],  v: 'martes'  },
+    { kw: ['miércoles', 'miercoles'], v: 'miércoles' },
+    { kw: ['jueves'],  v: 'jueves'  },
+    { kw: ['viernes'], v: 'viernes' },
+    { kw: ['sábado', 'sabado'], v: 'sábado' },
+    { kw: ['domingo'], v: 'domingo' },
+    { kw: ['fin de semana', 'finde'], v: 'fin de semana' },
+  ];
+  for (const m of momento) if (m.kw.some(k => t.includes(k))) { out.momento = m.v; break; }
+
+  // categoría
+  const categoria = [
+    { kw: ['café', 'cafe', 'cafés', 'cafes', 'cafetería', 'cafeteria'], v: 'cafés' },
+    { kw: ['cena', 'cenar', 'comer', 'restaurante', 'comida'],          v: 'comida' },
+    { kw: ['bar', 'bares', 'tragos', 'cerveza', 'cervecería'],          v: 'bares' },
+    { kw: ['cultura', 'museo', 'librería', 'libreria', 'cine', 'arte'], v: 'cultura' },
+    { kw: ['parque', 'aire libre', 'caminar', 'paseo'],                 v: 'aire libre' },
+  ];
+  for (const c of categoria) if (c.kw.some(k => t.includes(k))) { out.categoria = c.v; break; }
+
+  // zona — barrios típicos del prototipo
+  const zonas = ['Palermo', 'San Telmo', 'Villa Crespo', 'Colegiales', 'Recoleta',
+                 'Caballito', 'Chacarita', 'Boedo', 'Centro', 'Belgrano'];
+  for (const z of zonas) if (t.includes(z.toLowerCase())) { out.zona = z; break; }
+
+  return out;
+}
+
+Object.assign(window, { PLACES, REVIEWS, HOSTS, COLLECTIONS, PLAN_OPTIONS, CATEGORIES,
+                        SEARCH_PLACEHOLDERS, AFFINE_REVIEWERS, affinityLabel, interpretQuery });
 
 </script>
 
@@ -1314,7 +1406,50 @@ const PlaceCard = ({ place, density = 'cozy', famaVariant = 'classic', onClick, 
           {place.cat} · {place.hood}
         </p>
         <FamaScore score={place.score} count={place.reviews} affinity={place.affinity} variant={famaVariant} />
+        <AffineRow place={place} />
       </div>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────
+// AffineRow — visualiza Fama Score predictivo en clave humana:
+// chip cualitativo de match + mini-avatares de reseñadores afines.
+// Es la traducción de "afinidad %" a algo lecible en card chica.
+// ─────────────────────────────────────────────────────────────
+const AffineRow = ({ place }) => {
+  const reviewers = (window.AFFINE_REVIEWERS && window.AFFINE_REVIEWERS[place.id]) || [];
+  const aff = window.affinityLabel(place.affinity);
+  if (!aff && !reviewers.length) return null;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+      {aff && (
+        <span style={{
+          display: 'inline-flex', alignItems: 'center', gap: 4,
+          padding: '3px 8px', borderRadius: 999,
+          background: aff.tone === 'primary' ? 'rgba(47, 111, 94, 0.10)' : SPOTA.c.bgAlt || '#F5EDE0',
+          border: `1px solid ${aff.tone === 'primary' ? 'rgba(47, 111, 94, 0.25)' : SPOTA.c.lineSoft}`,
+          fontFamily: SPOTA.font.ui, fontSize: 11, fontWeight: 600,
+          color: aff.tone === 'primary' ? SPOTA.c.primary : SPOTA.c.textSoft,
+        }}>
+          <Icon name="sparkles" size={10} color={aff.tone === 'primary' ? SPOTA.c.primary : SPOTA.c.textSoft} />
+          {aff.label}
+        </span>
+      )}
+      {reviewers.length > 0 && (
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+          <div style={{ display: 'inline-flex' }}>
+            {reviewers.slice(0, 3).map((name, i) => (
+              <div key={name} style={{ marginLeft: i === 0 ? 0 : -7, border: `2px solid ${SPOTA.c.surface}`, borderRadius: 999, lineHeight: 0 }}>
+                <img src={avatar(name, 36)} alt={name} style={{ width: 18, height: 18, borderRadius: 999, display: 'block' }} />
+              </div>
+            ))}
+          </div>
+          <span style={{ fontFamily: SPOTA.font.ui, fontSize: 11.5, color: SPOTA.c.textSoft, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic' }}>gente como vos</span>
+          </span>
+        </div>
+      )}
     </div>
   );
 };
@@ -1348,9 +1483,52 @@ const Avatar = ({ name, size = 40, score, badge }) => (
 );
 
 // ─────────────────────────────────────────────────────────────
+// IntentChips — visualiza las dimensiones interpretadas por interpretQuery.
+// Cada chip lleva un microprefijo en Fraunces italic (la dimensión) y el
+// valor en DM Sans semibold. Es informativo, no editable.
+// ─────────────────────────────────────────────────────────────
+const INTENT_DIMENSIONS = [
+  { key: 'ambiente',  prefix: 'ambiente',  icon: 'sparkles' },
+  { key: 'compania',  prefix: 'con',       icon: 'users'    },
+  { key: 'momento',   prefix: 'cuándo',    icon: 'calendar' },
+  { key: 'categoria', prefix: 'tipo',      icon: 'compass'  },
+  { key: 'zona',      prefix: 'en',        icon: 'map'      },
+];
+
+const IntentChips = ({ intents, label = 'Entendí esto:' }) => {
+  const present = INTENT_DIMENSIONS.filter(d => intents && intents[d.key]);
+  if (!present.length) return null;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', fontSize: 13, color: SPOTA.c.textSoft }}>
+        {label}
+      </span>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        {present.map(d => (
+          <span key={d.key} style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            padding: '6px 10px', borderRadius: 999,
+            background: SPOTA.c.surface, border: `1px solid ${SPOTA.c.line}`,
+            fontFamily: SPOTA.font.ui, fontSize: 12.5,
+          }}>
+            <Icon name={d.icon} size={12} color={SPOTA.c.primary} />
+            <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', color: SPOTA.c.textSoft }}>
+              {d.prefix}
+            </span>
+            <strong style={{ fontWeight: 600, color: SPOTA.c.text }}>
+              {intents[d.key]}
+            </strong>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────
 // Search bar (con placeholder rotando)
 // ─────────────────────────────────────────────────────────────
-const SearchBar = ({ onClick, expanded, onSubmit, value, onChange, placeholders = [] }) => {
+const SearchBar = ({ onClick, expanded, onSubmit, value, onChange, placeholders = [], hero = false }) => {
   const [phIdx, setPhIdx] = React.useState(0);
   React.useEffect(() => {
     if (!placeholders.length) return;
@@ -1358,29 +1536,52 @@ const SearchBar = ({ onClick, expanded, onSubmit, value, onChange, placeholders 
     return () => clearInterval(t);
   }, [placeholders.length]);
   const ph = placeholders[phIdx] || '¿Qué vas a descubrir hoy?';
+
+  // Modo hero: el input pasa a ser bloque protagónico de la pantalla
+  // (alto generoso, fondo blanco, borde primary, shadow marcada).
+  const styles = hero ? {
+    height: 64, padding: '0 20px',
+    background: '#FFFFFF',
+    border: `1.5px solid ${SPOTA.c.primary}`,
+    boxShadow: '0 8px 22px rgba(47, 111, 94, 0.12), 0 1px 3px rgba(47, 111, 94, 0.08)',
+    iconColor: SPOTA.c.primary,
+    iconSize: 22,
+    fontSize: 16,
+    phHeight: 24,
+  } : {
+    height: 52, padding: '0 14px',
+    background: SPOTA.c.surface,
+    border: `1px solid ${SPOTA.c.line}`,
+    boxShadow: SPOTA.shadow.card,
+    iconColor: SPOTA.c.textSoft,
+    iconSize: 20,
+    fontSize: 15,
+    phHeight: 22,
+  };
+
   return (
     <div onClick={onClick} style={{
-      display: 'flex', alignItems: 'center', gap: 10,
-      padding: '0 14px', height: 52,
-      background: SPOTA.c.surface, borderRadius: SPOTA.radius.pill,
-      border: `1px solid ${SPOTA.c.line}`, boxShadow: SPOTA.shadow.card,
+      display: 'flex', alignItems: 'center', gap: 12,
+      padding: styles.padding, height: styles.height,
+      background: styles.background, borderRadius: SPOTA.radius.pill,
+      border: styles.border, boxShadow: styles.boxShadow,
       cursor: 'text',
     }}>
-      <Icon name="search" size={20} color={SPOTA.c.textSoft} />
+      <Icon name="search" size={styles.iconSize} color={styles.iconColor} strokeWidth={hero ? 2.2 : 2} />
       {expanded ? (
         <input autoFocus value={value} onChange={(e) => onChange && onChange(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && onSubmit) onSubmit(); }}
           placeholder={ph}
           style={{
             flex: 1, border: 'none', outline: 'none', background: 'transparent',
-            fontFamily: SPOTA.font.ui, fontSize: 15, color: SPOTA.c.text,
+            fontFamily: SPOTA.font.ui, fontSize: styles.fontSize, color: SPOTA.c.text,
           }} />
       ) : (
-        <div style={{ flex: 1, position: 'relative', height: 22, overflow: 'hidden' }}>
+        <div style={{ flex: 1, position: 'relative', height: styles.phHeight, overflow: 'hidden' }}>
           {placeholders.map((p, i) => (
             <span key={i} style={{
               position: 'absolute', inset: 0, display: 'flex', alignItems: 'center',
-              fontFamily: SPOTA.font.ui, fontSize: 14.5, color: SPOTA.c.textSoft,
+              fontFamily: SPOTA.font.ui, fontSize: styles.fontSize - 0.5, color: SPOTA.c.textSoft,
               opacity: i === phIdx ? 1 : 0,
               transform: i === phIdx ? 'translateY(0)' : 'translateY(8px)',
               transition: 'opacity 300ms, transform 300ms',
@@ -1576,6 +1777,7 @@ const EmptyState = ({ icon, title, subtitle, action }) => (
 Object.assign(window, {
   Icon, SpotaLogo, Btn, Tag, ProofOfVisit, FamaScore, PlaceCard, Avatar,
   SearchBar, AppHeader, TabBar, Field, SectionTitle, Chip, EmptyState,
+  IntentChips, INTENT_DIMENSIONS, AffineRow,
 });
 
 </script>
@@ -1910,20 +2112,40 @@ Object.assign(window, { ScreenRegister, ScreenLogin, ScreenPreferences, ScreenCr
 <script type="text/babel" data-presets="react">
 // CU-06 — Descubrimiento (pantalla protagónica)
 
-const ScreenDiscover = ({ nav, famaVariant, density: dens }) => {
-  const [view, setView] = React.useState('list'); // list | map
-  const [cat, setCat] = React.useState(null);
-  const [saved, setSaved] = React.useState(['p1']);
+const ScreenDiscover = ({ nav }) => {
   const [searchOpen, setSearchOpen] = React.useState(false);
-  const toggleSave = (id) => setSaved(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
+  const [query, setQuery] = React.useState('');
+
+  const goSearch = (q) => {
+    const text = (q || '').trim();
+    if (!text) { setSearchOpen(false); return; }
+    nav('searchResults', { query: text });
+  };
+
+  // Atajos: cada chip de categoría dispara una búsqueda con su nombre como query.
+  // El parser interpreta el resultado como categoria=X y el flujo es idéntico.
+  const SHORTCUTS = [
+    { q: 'cafés',      label: 'Cafés',      icon: 'coffee'   },
+    { q: 'comida',     label: 'Comida',     icon: 'utensils' },
+    { q: 'bares',      label: 'Bares',      icon: 'bar'      },
+    { q: 'cultura',    label: 'Cultura',    icon: 'palette'  },
+    { q: 'aire libre', label: 'Aire libre', icon: 'leaf'     },
+  ];
+
+  // Ejemplos de prompts para invitar al diálogo en lenguaje natural.
+  const EXAMPLES = [
+    'café para trabajar con buen wifi',
+    'algo tranquilo en Palermo con una amiga',
+    'cena romántica el sábado',
+  ];
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: SPOTA.c.bg, overflow: 'hidden' }}>
-      {/* Header con saludo */}
-      <div style={{ padding: '14px 20px 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: SPOTA.c.bg, overflow: 'auto', paddingBottom: 90 }}>
+      {/* Header con saludo (compacto para que el input gane jerarquía) */}
+      <div style={{ padding: '16px 20px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
           <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.textSoft }}>Hola Sol 👋</p>
-          <h1 style={{ margin: '2px 0 0', fontFamily: SPOTA.font.ui, fontSize: 22, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.4 }}>
+          <h1 style={{ margin: '2px 0 0', fontFamily: SPOTA.font.ui, fontSize: 22, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.4, lineHeight: 1.2 }}>
             ¿Qué hacemos <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', color: SPOTA.c.secondary, fontWeight: 400 }}>hoy</span>?
           </h1>
         </div>
@@ -1932,105 +2154,61 @@ const ScreenDiscover = ({ nav, famaVariant, density: dens }) => {
         </button>
       </div>
 
-      {/* Search */}
-      <div style={{ padding: '8px 20px 12px' }}>
+      {/* Search HERO — bloque visual dominante de la pantalla */}
+      <div style={{ padding: '0 20px 22px' }}>
         <SearchBar
+          hero
           expanded={searchOpen}
+          value={query}
+          onChange={setQuery}
           onClick={() => setSearchOpen(true)}
-          onChange={() => {}}
-          onSubmit={() => setSearchOpen(false)}
+          onSubmit={() => goSearch(query)}
           placeholders={SEARCH_PLACEHOLDERS}
         />
       </div>
 
-      {/* Cat chips */}
-      <div style={{ display: 'flex', gap: 8, padding: '0 20px 12px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-        <Chip active={cat === null} onClick={() => setCat(null)} icon="sparkles">Para vos</Chip>
-        {CATEGORIES.map(c => (
-          <Chip key={c.id} active={cat === c.id} onClick={() => setCat(c.id)} icon={c.icon}>{c.label}</Chip>
-        ))}
-      </div>
-
-      {/* Toggle list/map */}
-      <div style={{ padding: '0 20px 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.textSoft }}>
-          <strong style={{ color: SPOTA.c.text }}>{PLACES.length} lugares</strong> alineados a tu perfil
+      {/* Atajos discretos (apoyo, no protagonista) */}
+      <div style={{ padding: '0 20px 6px' }}>
+        <p style={{ margin: '0 0 10px', fontFamily: SPOTA.font.serif, fontStyle: 'italic', fontSize: 12.5, color: SPOTA.c.textSoft }}>
+          o elegí un atajo
         </p>
-        <div style={{ display: 'inline-flex', borderRadius: 999, background: SPOTA.c.surface, padding: 3, border: `1px solid ${SPOTA.c.line}` }}>
-          {[{ id: 'list', i: 'list' }, { id: 'map', i: 'map' }].map(t => (
-            <button key={t.id} onClick={() => setView(t.id)} style={{
-              border: 'none', cursor: 'pointer', padding: '6px 12px', borderRadius: 999,
-              background: view === t.id ? SPOTA.c.primary : 'transparent',
-              color: view === t.id ? '#fff' : SPOTA.c.textSoft,
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {SHORTCUTS.map(s => (
+            <button key={s.q} onClick={() => goSearch(s.q)} style={{
               display: 'inline-flex', alignItems: 'center', gap: 5,
-              fontFamily: SPOTA.font.ui, fontSize: 12.5, fontWeight: 600,
+              padding: '6px 10px', borderRadius: 999,
+              background: 'transparent', border: `1px solid ${SPOTA.c.lineSoft}`,
+              cursor: 'pointer', fontFamily: SPOTA.font.ui, fontSize: 12, fontWeight: 500,
+              color: SPOTA.c.textSoft,
             }}>
-              <Icon name={t.i} size={14} /> {t.id === 'list' ? 'Lista' : 'Mapa'}
+              <Icon name={s.icon} size={12} color={SPOTA.c.textSoft} />
+              {s.label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Content */}
-      {view === 'list' ? (
-        <div style={{ flex: 1, overflow: 'auto', padding: '4px 20px 24px' }}>
-          {/* Hero featured card */}
-          <div onClick={() => nav('placeDetail', { id: 'p1' })} style={{
-            position: 'relative', borderRadius: 18, overflow: 'hidden', height: 200, marginBottom: 16,
-            boxShadow: SPOTA.shadow.cardHover, cursor: 'pointer',
-          }}>
-            <img src={photo('cafePalermo', 800, 500)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 20%, rgba(20,15,12,0.55) 55%, rgba(20,15,12,0.92) 100%)' }} />
-            <div style={{ position: 'absolute', top: 12, left: 12, display: 'flex', gap: 6 }}>
-              <Tag kind="accent" icon="sparkles">Destacado para vos</Tag>
-            </div>
-            <div style={{ position: 'absolute', top: 12, right: 12 }}>
-              <ProofOfVisit />
-            </div>
-            <div style={{ position: 'absolute', bottom: 14, left: 16, right: 16, color: '#fff' }}>
-              <h2 style={{ margin: 0, fontFamily: SPOTA.font.ui, fontWeight: 800, fontSize: 22, lineHeight: 1.15, textShadow: '0 1px 3px rgba(0,0,0,0.55)' }}>Café Cobrand</h2>
-              <p style={{ margin: '4px 0 8px', fontFamily: SPOTA.font.ui, fontSize: 13.5, opacity: 0.95, textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>
-                Cafetería · Palermo · Abierto ahora
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, textShadow: '0 1px 2px rgba(0,0,0,0.45)' }}>
-                <FamaScore score={4.8} count={312} affinity={94} variant={famaVariant} onDark />
-                <span style={{ fontFamily: SPOTA.font.ui, fontSize: 12, opacity: 0.95 }}>· $$ · −15% en café</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Section: Para vos */}
-          <SectionTitle action="Ver todo" onAction={() => {}}>Planes y lugares para vos</SectionTitle>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 22 }}>
-            {PLACES.slice(1, 5).map(p => (
-              <PlaceCard key={p.id} place={p} density={dens} famaVariant={famaVariant}
-                saved={saved.includes(p.id)} onSave={() => toggleSave(p.id)}
-                onClick={() => nav('placeDetail', { id: p.id })} />
-            ))}
-          </div>
-
-          {/* Section: Cerca */}
-          <SectionTitle action="Ver todo">Cerca tuyo</SectionTitle>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 22 }}>
-            {PLACES.slice(5, 9).map(p => (
-              <PlaceCard key={p.id} place={p} density={dens} famaVariant={famaVariant}
-                saved={saved.includes(p.id)} onSave={() => toggleSave(p.id)}
-                onClick={() => nav('placeDetail', { id: p.id })} />
-            ))}
-          </div>
-
-          <SectionTitle>Más para descubrir</SectionTitle>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            {PLACES.slice(9, 12).map(p => (
-              <PlaceCard key={p.id} place={p} density={dens} famaVariant={famaVariant}
-                saved={saved.includes(p.id)} onSave={() => toggleSave(p.id)}
-                onClick={() => nav('placeDetail', { id: p.id })} />
-            ))}
-          </div>
+      {/* Ejemplos clicables */}
+      <div style={{ padding: '22px 20px 12px' }}>
+        <p style={{ margin: '0 0 10px', fontFamily: SPOTA.font.serif, fontStyle: 'italic', fontSize: 12.5, color: SPOTA.c.textSoft }}>
+          probá decirle
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {EXAMPLES.map(ex => (
+            <button key={ex} onClick={() => goSearch(ex)} style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '12px 14px', borderRadius: 14,
+              background: SPOTA.c.surface, border: `1px solid ${SPOTA.c.lineSoft}`,
+              cursor: 'pointer', textAlign: 'left',
+              fontFamily: SPOTA.font.ui, fontSize: 14, color: SPOTA.c.text,
+            }}>
+              <Icon name="sparkles" size={14} color={SPOTA.c.accent} />
+              <span style={{ flex: 1 }}>"{ex}"</span>
+              <Icon name="arrowRight" size={14} color={SPOTA.c.textSoft} />
+            </button>
+          ))}
         </div>
-      ) : (
-        <MapView nav={nav} famaVariant={famaVariant} />
-      )}
+      </div>
     </div>
   );
 };
@@ -2285,7 +2463,7 @@ const ScreenPlaceDetail = ({ nav, params, famaVariant }) => {
   );
 };
 
-Object.assign(window, { ScreenDiscover, ScreenPlaceDetail });
+Object.assign(window, { ScreenDiscover, ScreenPlaceDetail, MapView });
 
 </script>
 
@@ -3843,26 +4021,134 @@ const ScreenRecover = ({ nav }) => {
   );
 };
 
-const ScreenSearchResults = ({ nav }) => {
+const ScreenSearchResults = ({ nav, params }) => {
   const tweaks = window.__SPOTA_TWEAKS || {};
+  const initialQuery = (params && params.query) || 'algo tranquilo en Palermo con una amiga el sábado';
+
+  const [activeQuery, setActiveQuery] = React.useState(initialQuery);
+  const [draftQuery, setDraftQuery] = React.useState(initialQuery);
+  const [loading, setLoading] = React.useState(true);
+  const [view, setView] = React.useState('list'); // list | map
+  const intents = window.interpretQuery(activeQuery);
+
+  React.useEffect(() => {
+    setLoading(true);
+    const t = setTimeout(() => setLoading(false), 750);
+    return () => clearTimeout(t);
+  }, [activeQuery]);
+
+  const submit = () => {
+    const q = (draftQuery || '').trim();
+    if (!q || q === activeQuery) return;
+    setActiveQuery(q);
+  };
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: SPOTA.c.bg }}>
+      {/* Header: back + input editable refinable */}
       <div style={{ padding: '10px 16px 8px', display: 'flex', alignItems: 'center', gap: 10, background: SPOTA.c.bg }}>
-        <button onClick={() => nav('home')} style={{ width: 40, height: 40, borderRadius: 999, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="arrowLeft" size={20} /></button>
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: SPOTA.c.surface, borderRadius: 999, border: `1.5px solid ${SPOTA.c.line}` }}>
+        <button onClick={() => nav('home')} style={{ width: 40, height: 40, borderRadius: 999, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Icon name="arrowLeft" size={20} />
+        </button>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: SPOTA.c.surface, borderRadius: 999, border: `1.5px solid ${SPOTA.c.line}` }}>
           <Icon name="search" size={16} color={SPOTA.c.textSoft} />
-          <span style={{ fontFamily: SPOTA.font.ui, fontSize: 14, color: SPOTA.c.text }}>algo tranquilo en Palermo</span>
+          <input
+            value={draftQuery}
+            onChange={(e) => setDraftQuery(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.target.blur(); submit(); } }}
+            style={{
+              flex: 1, minWidth: 0, border: 'none', outline: 'none', background: 'transparent',
+              fontFamily: SPOTA.font.ui, fontSize: 14, color: SPOTA.c.text,
+            }}
+          />
+          {draftQuery && draftQuery !== activeQuery && (
+            <button onClick={submit} style={{
+              border: 'none', background: SPOTA.c.primary, color: '#fff',
+              fontFamily: SPOTA.font.ui, fontSize: 11.5, fontWeight: 600,
+              padding: '4px 10px', borderRadius: 999, cursor: 'pointer', flexShrink: 0,
+            }}>Refinar</button>
+          )}
         </div>
       </div>
-      <div style={{ display: 'flex', gap: 6, padding: '8px 16px 12px', overflowX: 'auto' }}>
-        {['Palermo', 'Tranquilo', 'Café', 'Abre ahora'].map(c => <Chip key={c} active>{c}</Chip>)}
+
+      {loading ? (
+        <ConciergeLoading intents={intents} />
+      ) : (
+        <React.Fragment>
+          <div style={{ padding: '4px 16px 12px' }}>
+            <IntentChips intents={intents} />
+          </div>
+
+          {/* Toggle Lista/Mapa + contador */}
+          <div style={{ padding: '0 16px 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+            <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.textSoft }}>
+              <strong style={{ color: SPOTA.c.text }}>{PLACES.length} lugares</strong> por afinidad
+            </p>
+            <div style={{ display: 'inline-flex', borderRadius: 999, background: SPOTA.c.surface, padding: 3, border: `1px solid ${SPOTA.c.line}` }}>
+              {[{ id: 'list', i: 'list', l: 'Lista' }, { id: 'map', i: 'map', l: 'Mapa' }].map(t => (
+                <button key={t.id} onClick={() => setView(t.id)} style={{
+                  border: 'none', cursor: 'pointer', padding: '6px 12px', borderRadius: 999,
+                  background: view === t.id ? SPOTA.c.primary : 'transparent',
+                  color: view === t.id ? '#fff' : SPOTA.c.textSoft,
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  fontFamily: SPOTA.font.ui, fontSize: 12.5, fontWeight: 600,
+                }}>
+                  <Icon name={t.i} size={14} /> {t.l}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {view === 'list' ? (
+            <div style={{ flex: 1, overflow: 'auto', padding: '0 16px 24px' }}>
+              {PLACES.map(p => (
+                <div key={p.id} style={{ marginBottom: 14 }}>
+                  <PlaceCard place={p}
+                    density={tweaks.density || 'cozy'}
+                    famaVariant={tweaks.famaVariant || 'classic'}
+                    onClick={() => nav('placeDetail', { id: p.id })} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <SearchResultsMap nav={nav} famaVariant={tweaks.famaVariant || 'classic'} />
+          )}
+        </React.Fragment>
+      )}
+    </div>
+  );
+};
+
+// Wrapper para reusar el MapView del módulo de Discover desde SearchResults.
+// JSX no acepta `<window.X />` (member access en lowercase), así que se
+// envuelve para mantener el componente original como fuente de verdad.
+const SearchResultsMap = (props) => {
+  const M = window.MapView;
+  return M ? <M {...props} /> : null;
+};
+
+// ConciergeLoading — pausa narrativa entre submit y resultados.
+// Comunica que hay un cerebro detrás, no un SQL. Dura ~750ms.
+const ConciergeLoading = ({ intents }) => {
+  const dims = Object.values(intents || {}).filter(Boolean);
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', gap: 16 }}>
+      <div style={{ display: 'inline-flex', gap: 6 }}>
+        {[0, 1, 2].map(i => (
+          <span key={i} style={{
+            width: 8, height: 8, borderRadius: 999, background: SPOTA.c.primary,
+            opacity: 0.35, animation: `pulse 1.2s ease-in-out ${i * 0.15}s infinite`,
+          }} />
+        ))}
       </div>
-      <div style={{ flex: 1, overflow: 'auto', padding: '0 16px 24px' }}>
-        <p style={{ margin: '0 0 12px', fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.textSoft }}>
-          <strong style={{ color: SPOTA.c.text }}>{PLACES.length} lugares</strong> encontrados
+      <p style={{ margin: 0, textAlign: 'center', fontFamily: SPOTA.font.ui, fontSize: 15, color: SPOTA.c.text }}>
+        <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic' }}>Leyendo</span> tus gustos…
+      </p>
+      {dims.length > 0 && (
+        <p style={{ margin: 0, textAlign: 'center', fontFamily: SPOTA.font.ui, fontSize: 12.5, color: SPOTA.c.textSoft, maxWidth: 280, lineHeight: 1.5 }}>
+          Cruzando {dims.join(' · ')} con tu Fama Score
         </p>
-        {PLACES.map(p => <PlaceCard key={p.id} place={p} density={tweaks.density || 'cozy'} famaVariant={tweaks.famaVariant || 'classic'} onClick={() => nav('placeDetail')} />)}
-      </div>
+      )}
     </div>
   );
 };
@@ -4378,6 +4664,7 @@ const App = () => {
     const hash = window.location.hash.replace('#', '');
     return SCREENS.find(s => s.id === hash) ? hash : 'login';
   });
+  const [navParams, setNavParams] = useState({});
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
@@ -4396,7 +4683,7 @@ const App = () => {
   // Make tweaks globally readable by screens
   useEffect(() => { window.__SPOTA_TWEAKS = tweaks; }, [tweaks]);
 
-  const nav = (id) => { setCurrent(id); };
+  const nav = (id, params) => { setNavParams(params || {}); setCurrent(id); };
 
   const screen = SCREENS.find(s => s.id === current) || SCREENS[0];
   const ScreenComp = window[screen.comp];
@@ -4417,7 +4704,7 @@ const App = () => {
           <IOSDevice width={390} height={844}>
             <div style={{ height: 54, flexShrink: 0 }} />
             {ScreenComp ? (
-              <ScreenComp nav={nav} tweaks={tweaks} />
+              <ScreenComp nav={nav} tweaks={tweaks} params={navParams} />
             ) : (
               <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center', fontFamily: SPOTA.font.ui, color: SPOTA.c.textSoft }}>
                 Pantalla no encontrada: {screen.comp}
