@@ -1611,15 +1611,6 @@ const ScreenRegister = ({ nav }) => {
           <Field label="Email" type="email" placeholder="vos@email.com" icon="mail" value={email} onChange={setEmail} />
           <Field label="Contraseña" type="password" placeholder="Mínimo 8 caracteres" icon="lock" value={pwd} onChange={setPwd} />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '18px 0 12px' }}>
-          <div style={{ flex: 1, height: 1, background: SPOTA.c.line }} />
-          <span style={{ fontFamily: SPOTA.font.ui, fontSize: 12, color: SPOTA.c.textMuted }}>o registrate con</span>
-          <div style={{ flex: 1, height: 1, background: SPOTA.c.line }} />
-        </div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <Btn variant="light" full icon="google">Google</Btn>
-          <Btn variant="dark" full icon="apple">Apple</Btn>
-        </div>
       </div>
       {/* CTA + footer fijo abajo */}
       <div style={{ padding: '12px 24px 28px', background: SPOTA.c.bg }}>
@@ -1676,17 +1667,6 @@ const ScreenLogin = ({ nav }) => {
             ¿Olvidaste tu contraseña?
           </a>
         </div>
-        {!isBiz && <>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '18px 0 12px' }}>
-            <div style={{ flex: 1, height: 1, background: SPOTA.c.line }} />
-            <span style={{ fontFamily: SPOTA.font.ui, fontSize: 12, color: SPOTA.c.textMuted }}>o</span>
-            <div style={{ flex: 1, height: 1, background: SPOTA.c.line }} />
-          </div>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <Btn variant="light" full icon="google">Google</Btn>
-            <Btn variant="dark" full icon="apple">Apple</Btn>
-          </div>
-        </>}
       </div>
       {/* CTA fijo abajo */}
       <div style={{ padding: '12px 24px 28px' }}>
@@ -4027,6 +4007,9 @@ const ScreenProfile = ({ nav }) => (
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, opacity: 0.95 }}><Icon name="check" size={11} color="#fff" />Sin fee inicial</span>
         </div>
       </button>
+      <p style={{ margin: '4px 4px 12px', fontFamily: SPOTA.font.ui, fontSize: 12, color: SPOTA.c.textSoft, textAlign: 'right' }}>
+        ¿Ya sos host? <a onClick={() => nav('hostDashboard')} style={{ color: SPOTA.c.primary, fontWeight: 700, cursor: 'pointer' }}>Ir al dashboard →</a>
+      </p>
       <SectionTitle>Cuenta</SectionTitle>
       {[
         { id: 'preferences', t: 'Preferencias', i: 'sparkles' },

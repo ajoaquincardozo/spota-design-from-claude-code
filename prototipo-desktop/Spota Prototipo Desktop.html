@@ -381,11 +381,12 @@ Object.assign(window, { Icon, SpotaLogo, Btn, Avatar, Tag, ProofOfVisit, FamaSco
 <!-- desktop-shell.jsx -->
 <script type="text/babel" data-presets="react">
 // TopNav: barra fija superior. Reemplaza al TabBar inferior del mobile.
+// Decisión D-pendiente del backlog (sacar Perfil del navbar): el avatar en top-right
+// es entry suficiente al perfil. Las 3 secciones del navbar quedan enfocadas en producto.
 const NAV_ITEMS = [
   { id: 'home',        label: 'Descubrir',   icon: 'compass'  },
   { id: 'collections', label: 'Colecciones', icon: 'bookmark' },
   { id: 'plans',       label: 'Planes',      icon: 'calendar' },
-  { id: 'profile',     label: 'Perfil',      icon: 'user'     },
 ];
 
 // Botón con hover unificado para acciones del TopNav.
@@ -500,9 +501,11 @@ const TopNav = ({ current, nav }) => {
           <NavIconBtn title="Notificaciones">
             <Icon name="bell" size={19} color={SPOTA.c.textSoft} />
           </NavIconBtn>
-          <button onClick={() => nav('profile')} style={{
-            background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, marginLeft: 4,
+          <button onClick={() => nav('profile')} title="Tu perfil" style={{
+            background: current === 'profile' ? SPOTA.c.primarySoft : 'transparent',
+            border: 'none', cursor: 'pointer', padding: 4, marginLeft: 4, borderRadius: 999,
             display: 'flex', alignItems: 'center', gap: 8,
+            transition: 'background 150ms',
           }}>
             <Avatar name="Sol Benítez" size={36} score="87" />
           </button>
@@ -3071,32 +3074,6 @@ const AuthField = ({ label, icon, type = 'text', value, onChange, placeholder, a
   );
 };
 
-// Botones OAuth (visuales). No funcionalmente conectados.
-const OAuthRow = () => (
-  <>
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0' }}>
-      <div style={{ flex: 1, height: 1, background: SPOTA.c.lineSoft }} />
-      <span style={{ fontFamily: SPOTA.font.ui, fontSize: 12, color: SPOTA.c.textMuted }}>o</span>
-      <div style={{ flex: 1, height: 1, background: SPOTA.c.lineSoft }} />
-    </div>
-    <div style={{ display: 'flex', gap: 10 }}>
-      <button style={authOAuthStyle()}>
-        <Icon name="google" size={18} /> Continuar con Google
-      </button>
-      <button style={authOAuthStyle()}>
-        <Icon name="apple" size={18} color={SPOTA.c.text} /> Continuar con Apple
-      </button>
-    </div>
-  </>
-);
-const authOAuthStyle = () => ({
-  flex: 1, height: 44, padding: '0 14px', borderRadius: 12,
-  background: SPOTA.c.surface, color: SPOTA.c.text,
-  border: `1.5px solid ${SPOTA.c.line}`, cursor: 'pointer',
-  fontFamily: SPOTA.font.ui, fontWeight: 600, fontSize: 13.5,
-  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-});
-
 // Pantalla de Welcome — landing pública para usuarios no autenticados.
 const ScreenWelcome = ({ nav }) => (
   <div style={{ minHeight: '100vh', background: SPOTA.c.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32 }}>
@@ -3143,35 +3120,62 @@ const ScreenWelcome = ({ nav }) => (
   </div>
 );
 
-// Login
-const ScreenLogin = ({ nav }) => (
-  <AuthCard footer={
-    <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 13.5, color: SPOTA.c.textSoft }}>
-      ¿No tenés cuenta? <a onClick={() => nav('register')} style={{ color: SPOTA.c.primary, fontWeight: 700, cursor: 'pointer' }}>Crear cuenta</a>
-    </p>
-  }>
-    <div style={{ marginBottom: 24 }}>
-      <SpotaLogo size={28} />
-      <h1 style={{ margin: '20px 0 6px', fontFamily: SPOTA.font.ui, fontSize: 26, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.5 }}>
-        Iniciá <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', color: SPOTA.c.secondary, fontWeight: 400 }}>sesión</span>
-      </h1>
-      <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 14, color: SPOTA.c.textSoft }}>Volvé a tus experiencias y planes guardados.</p>
-    </div>
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <AuthField label="Email" icon="mail" type="email" autoComplete="email" placeholder="vos@correo.com" />
-      <AuthField label="Contraseña" icon="lock" type="password" autoComplete="current-password" placeholder="Tu contraseña" />
-    </div>
-    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
-      <a onClick={() => nav('recover')} style={{ fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.primary, fontWeight: 600, cursor: 'pointer' }}>
-        ¿Olvidaste tu contraseña?
-      </a>
-    </div>
-    <div style={{ marginTop: 18 }}>
-      <Btn variant="primary" size="lg" full onClick={() => nav('home')}>Iniciar sesión</Btn>
-    </div>
-    <OAuthRow />
-  </AuthCard>
-);
+// Login — con toggle Usuario / Negocio (D3: una sola entry de auth, dos contextos)
+const ScreenLogin = ({ nav }) => {
+  const [profile, setProfile] = React.useState('user');
+  const isBiz = profile === 'biz';
+  const accent = isBiz ? SPOTA.c.secondary : SPOTA.c.primary;
+  return (
+    <AuthCard footer={
+      <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 13.5, color: SPOTA.c.textSoft }}>
+        {isBiz
+          ? <>¿Aún no registraste tu negocio? <a onClick={() => nav('bizRegister')} style={{ color: SPOTA.c.secondary, fontWeight: 700, cursor: 'pointer' }}>Sumalo</a></>
+          : <>¿No tenés cuenta? <a onClick={() => nav('register')} style={{ color: SPOTA.c.primary, fontWeight: 700, cursor: 'pointer' }}>Crear cuenta</a></>}
+      </p>
+    }>
+      <div style={{ marginBottom: 18 }}>
+        <SpotaLogo size={28} />
+        <h1 style={{ margin: '20px 0 6px', fontFamily: SPOTA.font.ui, fontSize: 26, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.5 }}>
+          {isBiz
+            ? <>Entrá a tu <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', color: SPOTA.c.secondary, fontWeight: 400 }}>panel</span></>
+            : <>Iniciá <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', color: SPOTA.c.secondary, fontWeight: 400 }}>sesión</span></>}
+        </h1>
+        <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 14, color: SPOTA.c.textSoft }}>
+          {isBiz ? 'Gestioná beneficios, campañas e insights de tu local.' : 'Volvé a tus experiencias y planes guardados.'}
+        </p>
+      </div>
+      {/* Toggle Usuario / Negocio */}
+      <div style={{ display: 'inline-flex', padding: 3, borderRadius: 999, background: SPOTA.c.bg, border: `1px solid ${SPOTA.c.line}`, marginBottom: 18 }}>
+        {[{ id: 'user', t: 'Usuario' }, { id: 'biz', t: 'Negocio' }].map(o => {
+          const on = profile === o.id;
+          return (
+            <button key={o.id} onClick={() => setProfile(o.id)} style={{
+              padding: '8px 18px', borderRadius: 999, border: 'none', cursor: 'pointer',
+              background: on ? accent : 'transparent',
+              color: on ? '#fff' : SPOTA.c.textSoft,
+              fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 13, letterSpacing: 0.2,
+              transition: 'all 180ms',
+            }}>{o.t}</button>
+          );
+        })}
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <AuthField label="Email" icon="mail" type="email" autoComplete="email" placeholder={isBiz ? 'negocio@correo.com' : 'vos@correo.com'} />
+        <AuthField label="Contraseña" icon="lock" type="password" autoComplete="current-password" placeholder="Tu contraseña" />
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
+        <a onClick={() => nav('recover')} style={{ fontFamily: SPOTA.font.ui, fontSize: 13, color: accent, fontWeight: 600, cursor: 'pointer' }}>
+          ¿Olvidaste tu contraseña?
+        </a>
+      </div>
+      <div style={{ marginTop: 18 }}>
+        <Btn variant={isBiz ? 'secondary' : 'primary'} size="lg" full onClick={() => nav(isBiz ? 'bizHome' : 'home')}>
+          Iniciar sesión
+        </Btn>
+      </div>
+    </AuthCard>
+  );
+};
 
 // Register
 const ScreenRegister = ({ nav }) => {
@@ -3210,7 +3214,6 @@ const ScreenRegister = ({ nav }) => {
       <div style={{ marginTop: 20 }}>
         <Btn variant="primary" size="lg" full onClick={() => nav('home')}>Crear cuenta</Btn>
       </div>
-      <OAuthRow />
     </AuthCard>
   );
 };
@@ -3276,15 +3279,6 @@ const FormField = ({ label, icon, type = 'text', value, onChange, placeholder, h
     </div>
     {hint && <p style={{ margin: '6px 0 0', fontFamily: SPOTA.font.ui, fontSize: 12, color: SPOTA.c.textMuted, lineHeight: 1.4 }}>{hint}</p>}
   </div>
-);
-
-const Toggle = ({ on, onChange }) => (
-  <button onClick={() => onChange(!on)} style={{
-    width: 48, height: 28, borderRadius: 999, border: 'none', cursor: 'pointer',
-    background: on ? SPOTA.c.primary : SPOTA.c.line, position: 'relative', transition: 'background 200ms', flexShrink: 0,
-  }}>
-    <div style={{ position: 'absolute', top: 3, left: on ? 23 : 3, width: 22, height: 22, borderRadius: 999, background: '#fff', transition: 'left 200ms', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
-  </button>
 );
 
 // CU-10: Crear colección — desktop con preview en vivo
@@ -3501,8 +3495,6 @@ const ScreenEditProfile = ({ nav }) => (
 
 // CU-05: Credenciales y privacidad
 const ScreenCredentials = ({ nav }) => {
-  const [pubReviews, setPubReviews] = React.useState(true);
-  const [showHood, setShowHood] = React.useState(true);
   return (
     <section>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.textSoft }}>
@@ -3517,7 +3509,7 @@ const ScreenCredentials = ({ nav }) => {
         <h1 style={{ margin: '0 0 4px', fontFamily: SPOTA.font.ui, fontSize: 28, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.5 }}>
           Credenciales y <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', color: SPOTA.c.secondary, fontWeight: 400 }}>privacidad</span>
         </h1>
-        <p style={{ margin: '0 0 24px', fontFamily: SPOTA.font.ui, fontSize: 14, color: SPOTA.c.textSoft }}>Datos sensibles de tu cuenta y cómo se ven tus reseñas.</p>
+        <p style={{ margin: '0 0 24px', fontFamily: SPOTA.font.ui, fontSize: 14, color: SPOTA.c.textSoft }}>Datos sensibles de tu cuenta.</p>
 
         {/* Email */}
         <div style={{ background: SPOTA.c.surface, borderRadius: 16, padding: 20, marginBottom: 14, border: `1px solid ${SPOTA.c.lineSoft}`, display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -3540,50 +3532,6 @@ const ScreenCredentials = ({ nav }) => {
           <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
             <Btn variant="primary" icon="check">Actualizar contraseña</Btn>
           </div>
-        </div>
-
-        {/* Sesiones */}
-        <div style={{ background: SPOTA.c.surface, borderRadius: 16, padding: 20, marginBottom: 14, border: `1px solid ${SPOTA.c.lineSoft}` }}>
-          <h3 style={{ margin: '0 0 14px', fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 14.5, color: SPOTA.c.text }}>Sesiones activas</h3>
-          {[
-            { device: 'Mac · Safari · CABA', when: 'Activa ahora', current: true },
-            { device: 'iPhone 15 · Spota app · CABA', when: 'Hace 2 horas', current: false },
-            { device: 'Chrome · Buenos Aires', when: 'Hace 5 días', current: false },
-          ].map((s, i) => (
-            <div key={i} style={{
-              display: 'flex', alignItems: 'center', gap: 14,
-              padding: '12px 0', borderTop: i === 0 ? 'none' : `1px solid ${SPOTA.c.lineSoft}`,
-            }}>
-              <div style={{ width: 10, height: 10, borderRadius: 999, background: s.current ? SPOTA.c.success : SPOTA.c.line, flexShrink: 0 }} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: SPOTA.font.ui, fontWeight: 600, fontSize: 13.5, color: SPOTA.c.text }}>
-                  {s.device} {s.current && <span style={{ fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 11, color: SPOTA.c.success, marginLeft: 6 }}>· Este dispositivo</span>}
-                </div>
-                <div style={{ fontFamily: SPOTA.font.ui, fontSize: 12, color: SPOTA.c.textSoft, marginTop: 2 }}>{s.when}</div>
-              </div>
-              {!s.current && <Btn variant="ghost" size="sm">Cerrar sesión</Btn>}
-            </div>
-          ))}
-        </div>
-
-        {/* Privacidad */}
-        <div style={{ background: SPOTA.c.surface, borderRadius: 16, padding: 20, marginBottom: 14, border: `1px solid ${SPOTA.c.lineSoft}` }}>
-          <h3 style={{ margin: '0 0 14px', fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 14.5, color: SPOTA.c.text }}>Privacidad</h3>
-          {[
-            { label: 'Reseñas públicas por defecto', sub: 'Cuando publiques una reseña va a ser visible para la comunidad. Podés cambiarlo por reseña.', on: pubReviews, set: setPubReviews },
-            { label: 'Mostrar mi zona en perfil público', sub: 'Tu barrio aparece junto a tu nombre. No se muestra dirección exacta nunca.', on: showHood, set: setShowHood },
-          ].map((o, i) => (
-            <div key={o.label} style={{
-              display: 'flex', alignItems: 'center', gap: 14,
-              padding: '14px 0', borderTop: i === 0 ? 'none' : `1px solid ${SPOTA.c.lineSoft}`,
-            }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: SPOTA.font.ui, fontWeight: 600, fontSize: 13.5, color: SPOTA.c.text }}>{o.label}</div>
-                <p style={{ margin: '2px 0 0', fontFamily: SPOTA.font.ui, fontSize: 12.5, color: SPOTA.c.textSoft, lineHeight: 1.45 }}>{o.sub}</p>
-              </div>
-              <Toggle on={o.on} onChange={o.set} />
-            </div>
-          ))}
         </div>
 
         {/* Zona de peligro */}

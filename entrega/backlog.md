@@ -28,16 +28,10 @@ Estas pantallas existen en el mobile y todavía no se portaron al desktop. Hoy r
 
 Decisiones discutidas pero no aplicadas todavía. Cuando se apliquen, se suman al `CLAUDE.md` como D-nuevo.
 
-### D-pendiente · Sacar "Perfil" del navbar desktop
-- **Estado:** acordado conceptualmente, falta aplicar.
-- **Razón:** el avatar en top-right ya es entry al perfil; el ítem extra es redundante.
-- **Trade-off resuelto:** se prefiere navbar más enfocado en producto (Descubrir / Colecciones / Planes) sobre redundancia accesible.
-
-### D-pendiente · Avatar dropdown en TopNav
-- **Estado:** debate abierto.
-- **Pros:** consolida acciones (ver perfil, configuración, vista de negocio, cerrar sesión) en una sola affordance bien posicionada.
-- **Contras:** añade complejidad; el click directo es más rápido para el caso "ir al perfil".
-- **Decisión pendiente:** definir si conviene reemplazar el click directo por dropdown, o sumar dropdown solo al hover/right-click.
+### ✅ Aplicado · Sacar "Perfil" del navbar desktop
+- **Estado:** aplicado en commit `bf951b2..ea29a37` región (desktop).
+- **Resultado:** el avatar en top-right es el único entry al perfil. Active state visual del avatar cuando estás en el área de perfil (`profile`, `preferences`, `credentials`, `editProfile`, `myExperiences`, `registerHost`, `hostDashboard`).
+- **Razón:** el avatar es affordance universal. El navbar quedó más enfocado en producto (Descubrir / Colecciones / Planes).
 
 ---
 
@@ -85,3 +79,7 @@ Para que el siguiente que lea esto no lo proponga de nuevo:
 - **Estado "Pendiente" o "Cancelado" en la sub-máquina del host.** Decidido en D10: sin cancelaciones, todo o nada. La irreversibilidad le da peso a la decisión.
 - **Paso de validación GPS en wizard de publicar.** Decidido en D9: eliminado. La validación es silenciosa en background, no en línea con la publicación.
 - **Niveles del Fama Score como "Pro" / "Premium".** Decidido en D1: léxico barrial (Nuevo, Conocido, Habitué, Referente, Maestro). Evitar términos SaaS.
+- **Avatar dropdown en TopNav desktop.** Evaluado y descartado. El dropdown es estándar en SaaS (GitHub, Notion) porque el patrón mental es "login → trabajo → logout". Spota es consumer: el usuario explora y guarda, no hay sesión que pesee. El avatar como entry directo al Perfil es más simple y coherente con el mobile (que tampoco tiene dropdown). Si el producto agrega switchers de cuenta o multi-workspace, ahí sí ganaría sentido.
+- **OAuth (Google / Apple) en Login y Register.** Evaluado y descartado para esta fase. En un prototipo conceptual son ruido visual: implican integración OAuth real, política de privacidad de proveedores, etc. El flujo email + password alcanza para mostrar el patrón.
+- **"Sesiones activas" y "Privacidad" en Credenciales del desktop.** Existían como cards extras y se sacaron. Sesiones excede el alcance de CU-05; Privacidad no pertenecía al apartado de credenciales. Si Privacidad vuelve, debería vivir en Preferencias (pero la visibilidad ya se elige por reseña en el wizard de publicar, no requiere setting global).
+- **Notificaciones en Perfil del desktop.** Se quitó (sección 3 de este backlog). No tiene equivalente en mobile ni CU asignado.
