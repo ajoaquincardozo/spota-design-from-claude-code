@@ -2986,9 +2986,8 @@ const ScreenProfile = ({ nav }) => (
           <h2 style={{ margin: '0 0 14px', fontFamily: SPOTA.font.ui, fontSize: 20, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.3 }}>Cuenta</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[
-              { id: 'preferences',   t: 'Preferencias', s: 'Tipos de experiencia, zona, contexto', i: 'sparkles' },
-              { id: 'credentials',   t: 'Credenciales y privacidad', s: 'Email, contraseña, datos personales', i: 'lock' },
-              { id: 'notifications', t: 'Notificaciones', s: 'Plan grupal, beneficios, hosts', i: 'bell' },
+              { id: 'preferences', t: 'Preferencias', s: 'Tipos de experiencia, zona, contexto', i: 'sparkles' },
+              { id: 'credentials', t: 'Credenciales y privacidad', s: 'Email, contraseña, datos personales', i: 'lock' },
             ].map(o => (
               <button key={o.id} onClick={() => nav(o.id)} style={{
                 display: 'flex', alignItems: 'center', gap: 14, padding: 14, width: '100%', textAlign: 'left',
@@ -3032,7 +3031,6 @@ Object.assign(window, { ScreenProfile });
 const SCREEN_META = {
   preferences:      { label: 'Preferencias', icon: 'sparkles' },
   credentials:      { label: 'Credenciales y privacidad', icon: 'lock' },
-  notifications:    { label: 'Notificaciones', icon: 'bell' },
   createCollection: { label: 'Nueva colección', icon: 'plus' },
   editProfile:      { label: 'Editar perfil', icon: 'edit' },
   myExperiences:    { label: 'Mis experiencias', icon: 'compass' },
@@ -3111,7 +3109,6 @@ const SCREENS = {
   // Próxima fase — placeholders con label propio
   preferences:      ScreenSoon,
   credentials:      ScreenSoon,
-  notifications:    ScreenSoon,
   createCollection: ScreenSoon,
   editProfile:      ScreenSoon,
   myExperiences:    ScreenSoon,
@@ -3133,7 +3130,6 @@ const NAV_PARENT = {
   hostDashboard: 'profile',
   preferences: 'profile',
   credentials: 'profile',
-  notifications: 'profile',
   editProfile: 'profile',
   myExperiences: 'profile',
 };
