@@ -114,7 +114,22 @@ const CATEGORIES = [
   { id: 'planes', label: 'Planes', icon: 'sparkles' },
 ];
 
-Object.assign(window, { PLACES, CATEGORIES });
+const REVIEWS = [
+  { id: 'r1', user: 'Sol B.', hood: 'Belgrano', score: 5, fama: 92, text: 'Encontré un café de barrio increíble, atención impecable y mesas en patio interno con plantas. Volvería sin dudarlo.' },
+  { id: 'r2', user: 'Tomás R.', hood: 'Almagro', score: 5, fama: 87, text: 'Tostado propio, pastelería casera, wifi rápido. Es mi café para trabajar a la mañana.' },
+  { id: 'r3', user: 'Micaela L.', hood: 'Villa Urquiza', score: 4, fama: 95, text: 'Lugar precioso. Fui un sábado y estaba llenísimo, pero la atención siguió siendo cuidada.' },
+];
+
+const COLLECTIONS = [
+  { id: 'c1', name: 'Sábado lluvioso', count: 8, by: 'Sol B.', cover: 'cafePalermo', themeIcon: 'umbrella', public: true },
+  { id: 'c2', name: 'Cenas con onda', count: 12, by: 'Tomás R.', cover: 'pasta', themeIcon: 'utensils', public: true },
+  { id: 'c3', name: 'Cumple de Mica', count: 5, by: 'Vos', cover: 'cocteles', themeIcon: 'sparkles', public: false },
+  { id: 'c4', name: 'Brunches dominicales', count: 9, by: 'Camila V.', cover: 'brunch', themeIcon: 'coffee', public: true },
+  { id: 'c5', name: 'Aire libre con perro', count: 6, by: 'Vos', cover: 'parquePalermo', themeIcon: 'leaf', public: false },
+  { id: 'c6', name: 'Noches de tragos', count: 11, by: 'Federico M.', cover: 'vino', themeIcon: 'moon', public: true },
+];
+
+Object.assign(window, { PLACES, CATEGORIES, REVIEWS, COLLECTIONS });
 </script>
 
 <!-- components.jsx -->
@@ -155,6 +170,18 @@ const Icon = ({ name, size = 24, color = 'currentColor', strokeWidth = 1.75, fil
     case 'gift': return <svg {...p}><rect x="3" y="9" width="18" height="11" rx="2"/><path d="M3 12h18M12 9v11"/><path d="M8 9c-1.5 0-3-1-3-2.5C5 5 6.5 4 8 5c1.5 1 4 4 4 4s2.5-3 4-4c1.5-1 3 0 3 1.5C19 8 17.5 9 16 9"/></svg>;
     case 'list': return <svg {...p}><path d="M4 6h16M4 12h16M4 18h16"/></svg>;
     case 'map': return <svg {...p}><path d="m3 6 6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14"/></svg>;
+    case 'clock': return <svg {...p}><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>;
+    case 'share': return <svg {...p}><circle cx="6" cy="12" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="m9 11 6-3M9 13l6 3"/></svg>;
+    case 'edit': return <svg {...p}><path d="M11 4H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-6"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>;
+    case 'eye': return <svg {...p}><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>;
+    case 'mail': return <svg {...p}><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>;
+    case 'lock': return <svg {...p}><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>;
+    case 'globe': return <svg {...p}><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>;
+    case 'thumbsUp': return <svg {...p}><path d="M7 22V11l5-9 1 1-1 7h6a2 2 0 0 1 2 2.5l-2 8a2 2 0 0 1-2 1.5zM3 11h4v11H3z"/></svg>;
+    case 'more': return <svg {...p} fill={color} stroke="none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>;
+    case 'umbrella': return <svg {...p}><path d="M12 3a9 9 0 0 1 9 9H3a9 9 0 0 1 9-9zM12 12v7a2 2 0 0 0 4 0"/></svg>;
+    case 'moon': return <svg {...p}><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>;
+    case 'wineglass': return <svg {...p}><path d="M8 3h8l-1 6a3 3 0 0 1-6 0zM12 12v9M9 21h6"/></svg>;
     default: return null;
   }
 };
@@ -736,7 +763,7 @@ const ScreenDiscover = ({ nav }) => {
               <PlaceCard key={p.id} place={p}
                 saved={saved.includes(p.id)} onSave={() => toggleSave(p.id)}
                 selected={selectedPin === p.id}
-                onClick={() => setSelectedPin(p.id)} />
+                onClick={() => nav('placeDetail', { id: p.id })} />
             ))}
           </div>
         </div>
@@ -751,6 +778,310 @@ const ScreenDiscover = ({ nav }) => {
 };
 
 Object.assign(window, { ScreenDiscover });
+</script>
+
+<!-- screens-place-detail.jsx -->
+<script type="text/babel" data-presets="react">
+// Detalle de lugar — versión desktop con CTA de 4 estados (D8 del CLAUDE.md)
+// Estados: available → declared → visited → published
+const ScreenPlaceDetail = ({ nav, params }) => {
+  const place = PLACES.find(p => p.id === params?.id) || PLACES[0];
+  const initial = place.visited ? 'visited' : 'available';
+  const [visitState, setVisitState] = React.useState(initial);
+  const nearby = PLACES.filter(p => p.id !== place.id).slice(0, 4);
+
+  const ctaRow = () => {
+    if (visitState === 'available') return (
+      <>
+        <Btn variant="primary" icon="compass" onClick={() => setVisitState('declared')}>Quiero ir</Btn>
+        <Btn variant="outline" icon="collection">Guardar</Btn>
+      </>
+    );
+    if (visitState === 'declared') return (
+      <>
+        <Btn variant="outline" icon="check" onClick={() => setVisitState('visited')}>Simular llegada</Btn>
+        <Btn variant="ghost" onClick={() => setVisitState('available')}>Cancelar</Btn>
+      </>
+    );
+    if (visitState === 'visited') return (
+      <>
+        <Btn variant="primary" icon="edit" onClick={() => setVisitState('published')}>Publicar experiencia</Btn>
+        <Btn variant="outline" icon="collection">Guardar</Btn>
+      </>
+    );
+    return (
+      <>
+        <Btn variant="primary" icon="eye" onClick={() => nav('home')}>Ver tu reseña</Btn>
+        <Btn variant="outline" icon="edit">Editar</Btn>
+      </>
+    );
+  };
+
+  return (
+    <section>
+      {/* Breadcrumb */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.textSoft }}>
+        <button onClick={() => nav('home')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: SPOTA.c.textSoft, fontFamily: SPOTA.font.ui, fontSize: 13, padding: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <Icon name="arrowLeft" size={14} /> Descubrir
+        </button>
+        <span style={{ color: SPOTA.c.textMuted }}>/</span>
+        <span style={{ color: SPOTA.c.text, fontWeight: 600 }}>{place.name}</span>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.6fr) minmax(0, 1fr)', gap: 32, alignItems: 'start' }}>
+        {/* Columna izquierda: foto + info + CTA */}
+        <div>
+          <div style={{ position: 'relative', borderRadius: SPOTA.radius.xl, overflow: 'hidden', height: 480, marginBottom: 24 }}>
+            <img src={photo(place.img, 1200, 800)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <div style={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 8 }}>
+              <button style={{ width: 42, height: 42, borderRadius: 999, border: 'none', background: 'rgba(255,255,255,0.92)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}>
+                <Icon name="share" size={18} />
+              </button>
+              <button style={{ width: 42, height: 42, borderRadius: 999, border: 'none', background: 'rgba(255,255,255,0.92)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}>
+                <Icon name="heart" size={18} />
+              </button>
+            </div>
+            {(visitState === 'visited' || visitState === 'published') && (
+              <div style={{ position: 'absolute', bottom: 16, left: 16 }}><ProofOfVisit size="lg" /></div>
+            )}
+          </div>
+
+          {/* Tags */}
+          <div style={{ display: 'flex', gap: 6, marginBottom: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+            {place.tag && <Tag kind="secondary">{place.tag}</Tag>}
+            {place.benefit && <Tag kind="accent" icon="gift">{place.benefit}</Tag>}
+            {visitState === 'published' && <Tag kind="softG" icon="check">Reseñado</Tag>}
+          </div>
+
+          <h1 style={{ margin: '0 0 6px', fontFamily: SPOTA.font.ui, fontSize: 34, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.6 }}>{place.name}</h1>
+          <p style={{ margin: '0 0 18px', fontFamily: SPOTA.font.ui, fontSize: 15, color: SPOTA.c.textSoft }}>{place.cat} · {place.hood} · {place.price}</p>
+
+          <div style={{ display: 'inline-flex', gap: 14, alignItems: 'center', marginBottom: 22, padding: '12px 18px', background: SPOTA.c.surface, borderRadius: 14, border: `1px solid ${SPOTA.c.lineSoft}` }}>
+            <FamaScore score={place.score} count={place.reviews} size="lg" />
+          </div>
+
+          <p style={{ margin: '0 0 22px', fontFamily: SPOTA.font.ui, fontSize: 16, color: SPOTA.c.text, lineHeight: 1.6, maxWidth: 680 }}>
+            Café de especialidad con tostado propio y pastelería casera. Mesas adentro y patio interno con plantas. Wifi rápido, ideal para trabajar a la mañana o tomar algo después del laburo con amigos.
+          </p>
+
+          {/* Aviso de "intención declarada" */}
+          {visitState === 'declared' && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', borderRadius: 12, marginBottom: 16, maxWidth: 680,
+              background: SPOTA.c.primarySoft, border: `1px dashed ${SPOTA.c.primary}`,
+            }}>
+              <Icon name="clock" size={18} color={SPOTA.c.primary} />
+              <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.primaryDark, lineHeight: 1.45 }}>
+                <strong>Te esperamos hasta las 21:30.</strong> Cuando llegues, validamos tu visita en silencio para que puedas reseñar después.
+              </p>
+            </div>
+          )}
+
+          {/* CTA según estado */}
+          <div style={{ display: 'flex', gap: 10, marginBottom: 32 }}>
+            {ctaRow()}
+          </div>
+        </div>
+
+        {/* Columna derecha: reseñas + lugares cercanos */}
+        <aside style={{ display: 'flex', flexDirection: 'column', gap: 28, position: 'sticky', top: 96 }}>
+          <div>
+            <h2 style={{ margin: '0 0 14px', fontFamily: SPOTA.font.ui, fontSize: 18, fontWeight: 700, color: SPOTA.c.text }}>Lo que dice la comunidad</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {REVIEWS.slice(0, 3).map(r => (
+                <div key={r.id} style={{ background: SPOTA.c.surface, borderRadius: 14, padding: 14, border: `1px solid ${SPOTA.c.lineSoft}` }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                    <Avatar name={r.user} size={36} score={r.fama} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 14, color: SPOTA.c.text }}>{r.user}</div>
+                      <div style={{ fontFamily: SPOTA.font.ui, fontSize: 12, color: SPOTA.c.textSoft }}>{r.hood} · Fama {r.fama}</div>
+                    </div>
+                    <div style={{ display: 'flex' }}>{[...Array(r.score)].map((_, i) => <Icon key={i} name="star" size={13} color={SPOTA.c.accent} />)}</div>
+                  </div>
+                  <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 13.5, color: SPOTA.c.text, lineHeight: 1.5 }}>{r.text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h2 style={{ margin: '0 0 14px', fontFamily: SPOTA.font.ui, fontSize: 18, fontWeight: 700, color: SPOTA.c.text }}>Cerca de acá</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {nearby.map(p => (
+                <button key={p.id} onClick={() => nav('placeDetail', { id: p.id })} style={{
+                  display: 'flex', alignItems: 'center', gap: 12, padding: 10, borderRadius: 12,
+                  background: SPOTA.c.surface, border: `1px solid ${SPOTA.c.lineSoft}`,
+                  cursor: 'pointer', textAlign: 'left',
+                }}>
+                  <img src={photo(p.img, 200, 200)} style={{ width: 56, height: 56, borderRadius: 10, objectFit: 'cover' }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 14, color: SPOTA.c.text }}>{p.name}</div>
+                    <div style={{ fontFamily: SPOTA.font.ui, fontSize: 12, color: SPOTA.c.textSoft, marginBottom: 2 }}>{p.cat} · {p.hood}</div>
+                    <FamaScore score={p.score} count={p.reviews} />
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+  );
+};
+
+Object.assign(window, { ScreenPlaceDetail });
+</script>
+
+<!-- screens-collections.jsx -->
+<script type="text/babel" data-presets="react">
+const ScreenCollections = ({ nav }) => {
+  const [tab, setTab] = React.useState('mine');
+  const mine = COLLECTIONS.filter(c => c.by === 'Vos');
+  const community = COLLECTIONS.filter(c => c.by !== 'Vos' && c.public);
+  const list = tab === 'mine' ? mine : community;
+
+  return (
+    <section>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24, gap: 16 }}>
+        <div>
+          <h1 style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 32, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.6 }}>
+            <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', color: SPOTA.c.secondary, fontWeight: 400 }}>Tus</span> colecciones
+          </h1>
+          <p style={{ margin: '6px 0 0', fontFamily: SPOTA.font.ui, fontSize: 14, color: SPOTA.c.textSoft }}>
+            Listas temáticas de lugares. Pueden ser privadas o compartidas con la comunidad.
+          </p>
+        </div>
+        <Btn variant="primary" icon="plus">Nueva colección</Btn>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 24, borderBottom: `1px solid ${SPOTA.c.lineSoft}` }}>
+        {[
+          { id: 'mine', t: 'Mis colecciones', n: mine.length },
+          { id: 'community', t: 'De la comunidad', n: community.length },
+        ].map(t => {
+          const on = tab === t.id;
+          return (
+            <button key={t.id} onClick={() => setTab(t.id)} style={{
+              padding: '12px 20px', border: 'none', background: 'transparent', cursor: 'pointer',
+              fontFamily: SPOTA.font.ui, fontWeight: on ? 700 : 500, fontSize: 14.5,
+              color: on ? SPOTA.c.primary : SPOTA.c.textSoft,
+              borderBottom: `2px solid ${on ? SPOTA.c.primary : 'transparent'}`,
+              marginBottom: -1, display: 'inline-flex', alignItems: 'center', gap: 6,
+            }}>
+              {t.t} <span style={{ background: on ? SPOTA.c.primary : SPOTA.c.lineSoft, color: on ? '#fff' : SPOTA.c.textSoft, padding: '1px 8px', borderRadius: 999, fontSize: 11.5, fontWeight: 700 }}>{t.n}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Grid 3 columnas */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+        {list.map(c => (
+          <CollectionCard key={c.id} collection={c} onClick={() => nav('collectionDetail', { id: c.id })} />
+        ))}
+      </div>
+    </section>
+  );
+};
+
+const CollectionCard = ({ collection, onClick }) => {
+  const [hover, setHover] = React.useState(false);
+  return (
+    <div onClick={onClick}
+      onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+      style={{
+        background: SPOTA.c.surface, borderRadius: SPOTA.radius.lg, overflow: 'hidden',
+        border: `1px solid ${SPOTA.c.lineSoft}`,
+        boxShadow: hover ? SPOTA.shadow.cardHover : SPOTA.shadow.card,
+        cursor: 'pointer', transform: hover ? 'translateY(-2px)' : 'none',
+        transition: 'transform 200ms, box-shadow 200ms',
+      }}>
+      <div style={{ position: 'relative', height: 180 }}>
+        <img src={photo(collection.cover, 600, 400)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 50%, rgba(20,15,12,0.65) 100%)' }} />
+        <div style={{ position: 'absolute', top: 12, left: 12, width: 38, height: 38, borderRadius: 12, background: SPOTA.c.surface, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name={collection.themeIcon} size={20} color={SPOTA.c.secondary} strokeWidth={1.9} />
+        </div>
+        {!collection.public && (
+          <div style={{ position: 'absolute', top: 12, right: 12 }}>
+            <Tag kind="soft" icon="lock">Privada</Tag>
+          </div>
+        )}
+        <div style={{ position: 'absolute', bottom: 14, left: 14, right: 14, color: '#fff' }}>
+          <h3 style={{ margin: 0, fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 18, textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>{collection.name}</h3>
+        </div>
+      </div>
+      <div style={{ padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Avatar name={collection.by} size={28} />
+          <span style={{ fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.textSoft }}>{collection.by}</span>
+        </div>
+        <span style={{ fontFamily: SPOTA.font.ui, fontSize: 13, fontWeight: 600, color: SPOTA.c.text }}>
+          {collection.count} lugares
+        </span>
+      </div>
+    </div>
+  );
+};
+
+const ScreenCollectionDetail = ({ nav, params }) => {
+  const c = COLLECTIONS.find(x => x.id === params?.id) || COLLECTIONS[0];
+  const places = PLACES.slice(0, c.count > 8 ? 8 : c.count);
+
+  return (
+    <section>
+      {/* Breadcrumb */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.textSoft }}>
+        <button onClick={() => nav('collections')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: SPOTA.c.textSoft, fontFamily: SPOTA.font.ui, fontSize: 13, padding: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <Icon name="arrowLeft" size={14} /> Colecciones
+        </button>
+        <span style={{ color: SPOTA.c.textMuted }}>/</span>
+        <span style={{ color: SPOTA.c.text, fontWeight: 600 }}>{c.name}</span>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 2fr)', gap: 32, alignItems: 'start' }}>
+        {/* Columna izquierda: cabezal sticky */}
+        <aside style={{ position: 'sticky', top: 96 }}>
+          <div style={{ position: 'relative', borderRadius: SPOTA.radius.xl, overflow: 'hidden', height: 280, marginBottom: 18 }}>
+            <img src={photo(c.cover, 800, 500)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 40%, rgba(20,15,12,0.7) 100%)' }} />
+            <div style={{ position: 'absolute', top: 16, left: 16, width: 48, height: 48, borderRadius: 14, background: SPOTA.c.surface, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: SPOTA.shadow.card }}>
+              <Icon name={c.themeIcon} size={26} color={SPOTA.c.secondary} strokeWidth={1.9} />
+            </div>
+          </div>
+          <h1 style={{ margin: '0 0 8px', fontFamily: SPOTA.font.ui, fontSize: 28, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.5 }}>{c.name}</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+            <Avatar name={c.by} size={28} />
+            <span style={{ fontFamily: SPOTA.font.ui, fontSize: 13.5, color: SPOTA.c.textSoft }}>
+              por <strong style={{ color: SPOTA.c.text }}>{c.by}</strong>
+            </span>
+            {c.public ? <Tag kind="softG" icon="globe">Pública</Tag> : <Tag kind="soft" icon="lock">Privada</Tag>}
+          </div>
+          <p style={{ margin: '0 0 18px', fontFamily: SPOTA.font.ui, fontSize: 14.5, color: SPOTA.c.text, lineHeight: 1.55 }}>
+            Una selección de lugares pensada para esos días que pintan tranquilos. Café de especialidad, librerías cálidas y rincones donde quedarse un rato sin apuro.
+          </p>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+            <Btn variant="primary" icon="bookmark">Guardar colección</Btn>
+            <Btn variant="outline" icon="share">Compartir</Btn>
+          </div>
+          <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.textSoft }}>
+            <strong style={{ color: SPOTA.c.text }}>{places.length} lugares</strong> · base ideal para armar un plan grupal
+          </p>
+        </aside>
+
+        {/* Columna derecha: grid de lugares */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+          {places.map(p => (
+            <PlaceCard key={p.id} place={p} onClick={() => nav('placeDetail', { id: p.id })} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+Object.assign(window, { ScreenCollections, ScreenCollectionDetail });
 </script>
 
 <!-- app.jsx -->
@@ -779,22 +1110,32 @@ const ScreenSoon = ({ current, nav }) => {
 };
 
 const SCREENS = {
-  home:        ScreenDiscover,
-  uikit:       ScreenDesignSystem,
-  collections: ScreenSoon,
-  plans:       ScreenSoon,
-  profile:     ScreenSoon,
+  home:             ScreenDiscover,
+  placeDetail:      ScreenPlaceDetail,
+  collections:      ScreenCollections,
+  collectionDetail: ScreenCollectionDetail,
+  uikit:            ScreenDesignSystem,
+  plans:            ScreenSoon,
+  profile:          ScreenSoon,
+};
+
+// Mapping de pantalla a ítem del nav (para resaltar el tab activo cuando estás en una pantalla hija).
+const NAV_PARENT = {
+  placeDetail: 'home',
+  collectionDetail: 'collections',
 };
 
 function App() {
   const [current, setCurrent] = React.useState('home');
-  const nav = (id) => setCurrent(id);
+  const [params, setParams] = React.useState({});
+  const nav = (id, p = {}) => { setCurrent(id); setParams(p); window.scrollTo(0, 0); };
   const Screen = SCREENS[current] || ScreenSoon;
+  const navHighlight = NAV_PARENT[current] || current;
 
   return (
     <SmallViewportGuard>
-      <DesktopFrame current={current} nav={nav}>
-        <Screen current={current} nav={nav} />
+      <DesktopFrame current={navHighlight} nav={nav}>
+        <Screen current={current} nav={nav} params={params} />
       </DesktopFrame>
     </SmallViewportGuard>
   );
