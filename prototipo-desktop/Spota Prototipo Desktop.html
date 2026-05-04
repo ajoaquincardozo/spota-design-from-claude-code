@@ -135,7 +135,19 @@ const PLAN_OPTIONS = [
   { id: 'op3', place: PLACES[5], votes: 3, voters: ['Sol', 'Tomi', 'Vos'] },
 ];
 
-Object.assign(window, { PLACES, CATEGORIES, REVIEWS, COLLECTIONS, PLAN_OPTIONS });
+const HOSTS = [
+  { id: 'h1', name: 'Federico M.', verified: true, fama: 4.9, reviews: 87, hood: 'Palermo', expertise: ['Cafés de especialidad', 'Diseño'], price: 8500, bio: 'Barista y diseñador. Te llevo por los mejores cafés de tercera ola de la ciudad.' },
+  { id: 'h2', name: 'Lucía P.', verified: false, fama: 4.7, reviews: 32, hood: 'San Telmo', expertise: ['Historia porteña', 'Tango'], price: 6000, bio: 'Crecí en San Telmo. Conozco cada esquina con su historia. Recorridos a pie con paradas en bares de barrio.' },
+  { id: 'h3', name: 'Mateo G.', verified: true, fama: 4.8, reviews: 56, hood: 'Chacarita', expertise: ['Cervecerías', 'Vida nocturna'], price: 7200, bio: 'Cicerone cervecero. Tour de bares artesanales con cata incluida y notas de cada estilo.' },
+];
+
+const OFFERS = [
+  { id: 'of1', title: 'Cafés de especialidad', user: 'Sol B.', date: 'Sáb 17 mayo', people: 2, hood: 'Palermo', budget: 8000, postulants: 3 },
+  { id: 'of2', title: 'Tour de bares en San Telmo', user: 'Tomás R.', date: 'Vie 23 mayo', people: 4, hood: 'San Telmo', budget: 12000, postulants: 5 },
+  { id: 'of3', title: 'Brunch para una primera cita', user: 'Mica L.', date: 'Dom 18 mayo', people: 2, hood: 'Villa Crespo', budget: 6500, postulants: 2 },
+];
+
+Object.assign(window, { PLACES, CATEGORIES, REVIEWS, COLLECTIONS, PLAN_OPTIONS, HOSTS, OFFERS });
 </script>
 
 <!-- components.jsx -->
@@ -188,6 +200,12 @@ const Icon = ({ name, size = 24, color = 'currentColor', strokeWidth = 1.75, fil
     case 'umbrella': return <svg {...p}><path d="M12 3a9 9 0 0 1 9 9H3a9 9 0 0 1 9-9zM12 12v7a2 2 0 0 0 4 0"/></svg>;
     case 'moon': return <svg {...p}><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>;
     case 'wineglass': return <svg {...p}><path d="M8 3h8l-1 6a3 3 0 0 1-6 0zM12 12v9M9 21h6"/></svg>;
+    case 'verify': return <svg {...p}><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3z"/><path d="m9 12 2 2 4-4"/></svg>;
+    case 'wallet': return <svg {...p}><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18M16 15h2"/></svg>;
+    case 'briefcase': return <svg {...p}><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></svg>;
+    case 'stats': return <svg {...p}><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>;
+    case 'home': return <svg {...p}><path d="m3 11 9-8 9 8v9a2 2 0 0 1-2 2h-3v-7h-8v7H5a2 2 0 0 1-2-2z"/></svg>;
+    case 'megaphone': return <svg {...p}><path d="M3 11v2a2 2 0 0 0 2 2h2l8 4V5L7 9H5a2 2 0 0 0-2 2zM18 8a4 4 0 0 1 0 8"/></svg>;
     default: return null;
   }
 };
@@ -1769,6 +1787,458 @@ const ScreenPlanClose = ({ nav }) => {
 Object.assign(window, { HostBlock, ScreenPlans, ScreenCreatePlan, ScreenPlanVote, ScreenPlanClose });
 </script>
 
+<!-- screens-hosts.jsx -->
+<script type="text/babel" data-presets="react">
+// Marketplace de Hosts (CU-15 entry + CU-16 ver postulaciones)
+// Layout desktop: hero arriba + 2 cols (mis ofertas + hosts disponibles)
+const ScreenHostMarketplace = ({ nav }) => {
+  return (
+    <section>
+      {/* Breadcrumb */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.textSoft }}>
+        <button onClick={() => nav('plans')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: SPOTA.c.textSoft, fontFamily: SPOTA.font.ui, fontSize: 13, padding: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <Icon name="arrowLeft" size={14} /> Planes
+        </button>
+        <span style={{ color: SPOTA.c.textMuted }}>/</span>
+        <span style={{ color: SPOTA.c.text, fontWeight: 600 }}>Marketplace de Hosts</span>
+      </div>
+
+      {/* Hero */}
+      <div style={{ background: `linear-gradient(135deg, ${SPOTA.c.primary}, ${SPOTA.c.primaryDark})`, color: '#fff', borderRadius: 18, padding: 28, marginBottom: 28, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24 }}>
+        <div style={{ flex: 1 }}>
+          <h1 style={{ margin: '0 0 6px', fontFamily: SPOTA.font.ui, fontSize: 26, fontWeight: 700, letterSpacing: -0.5 }}>
+            Vivila con un <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', fontWeight: 400 }}>host local</span>
+          </h1>
+          <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 14.5, opacity: 0.9, maxWidth: 540 }}>
+            Publicá lo que querés vivir y dejá que los hosts se postulen. Vos elegís a quién contratar
+            según su Fama Score, propuesta y precio.
+          </p>
+        </div>
+        <Btn variant="secondary" size="lg" icon="plus" onClick={() => nav('createOffer')}>Publicar oferta</Btn>
+      </div>
+
+      {/* 2 columnas: mis ofertas + hosts disponibles */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+        <div>
+          <h2 style={{ margin: '0 0 16px', fontFamily: SPOTA.font.ui, fontSize: 18, fontWeight: 700, color: SPOTA.c.text }}>Mis ofertas activas</h2>
+          {OFFERS.slice(0, 1).map(o => (
+            <button key={o.id} onClick={() => nav('hireHost', { id: o.id })} style={{
+              width: '100%', textAlign: 'left',
+              background: SPOTA.c.surface, borderRadius: 14, padding: 16, marginBottom: 12,
+              border: `1px solid ${SPOTA.c.lineSoft}`, boxShadow: SPOTA.shadow.card, cursor: 'pointer',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                <div>
+                  <h3 style={{ margin: 0, fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 16, color: SPOTA.c.text }}>{o.title}</h3>
+                  <p style={{ margin: '2px 0 0', fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.textSoft }}>{o.date} · {o.people} personas · {o.hood}</p>
+                </div>
+                <Tag kind="secondary" icon="users">{o.postulants} postulan</Tag>
+              </div>
+              <div style={{ paddingTop: 10, borderTop: `1px solid ${SPOTA.c.lineSoft}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontFamily: SPOTA.font.ui, fontSize: 12.5, color: SPOTA.c.textSoft }}>Hasta ${o.budget.toLocaleString('es-AR')} / persona</span>
+                <span style={{ fontFamily: SPOTA.font.ui, fontSize: 13.5, fontWeight: 700, color: SPOTA.c.primary, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  Ver postulaciones <Icon name="arrowRight" size={14} color={SPOTA.c.primary} />
+                </span>
+              </div>
+            </button>
+          ))}
+          <div style={{
+            padding: 18, borderRadius: 14, background: SPOTA.c.bgAlt, border: `1px dashed ${SPOTA.c.line}`,
+            textAlign: 'center',
+          }}>
+            <p style={{ margin: '0 0 10px', fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.textSoft, lineHeight: 1.5 }}>
+              ¿Tenés otra experiencia en mente?
+            </p>
+            <Btn variant="primary" size="sm" icon="plus" onClick={() => nav('createOffer')}>Publicar otra oferta</Btn>
+          </div>
+        </div>
+
+        <div>
+          <h2 style={{ margin: '0 0 16px', fontFamily: SPOTA.font.ui, fontSize: 18, fontWeight: 700, color: SPOTA.c.text }}>Hosts en tu zona</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {HOSTS.map(h => (
+              <div key={h.id} style={{
+                background: SPOTA.c.surface, borderRadius: 14, padding: 14,
+                border: `1px solid ${SPOTA.c.lineSoft}`, display: 'flex', gap: 12, alignItems: 'center',
+              }}>
+                <Avatar name={h.name} size={52} score={h.fama} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 14.5, color: SPOTA.c.text }}>{h.name}</span>
+                    {h.verified && <Tag kind="primary" icon="verify" style={{ padding: '2px 7px', fontSize: 10.5 }}>Certificado</Tag>}
+                  </div>
+                  <p style={{ margin: '2px 0 4px', fontFamily: SPOTA.font.ui, fontSize: 12.5, color: SPOTA.c.textSoft }}>
+                    {h.expertise[0]} · {h.hood} · {h.reviews} experiencias
+                  </p>
+                </div>
+                <Btn variant="outline" size="sm">Ver perfil</Btn>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// CU-15: Crear oferta — wizard 3 pasos
+const ScreenCreateOffer = ({ nav }) => {
+  const [step, setStep] = React.useState(1);
+  const [budget, setBudget] = React.useState(8000);
+  const [people, setPeople] = React.useState(2);
+  const [type, setType] = React.useState('Cafés de especialidad');
+  const total = 3;
+  const next = () => step < total ? setStep(step + 1) : nav('hostMarketplace');
+  const back = () => step > 1 ? setStep(step - 1) : nav('hostMarketplace');
+
+  return (
+    <section>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
+        <button onClick={back} style={{ width: 40, height: 40, borderRadius: 999, border: `1px solid ${SPOTA.c.line}`, background: SPOTA.c.surface, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name={step > 1 ? 'arrowLeft' : 'close'} size={18} />
+        </button>
+        <div style={{ flex: 1 }}>
+          <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 12.5, fontWeight: 700, color: SPOTA.c.primary, letterSpacing: 0.4, textTransform: 'uppercase' }}>Publicar Oferta de Viaje</p>
+          <h1 style={{ margin: '2px 0 0', fontFamily: SPOTA.font.ui, fontSize: 22, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.4 }}>Paso {step} de {total}</h1>
+        </div>
+      </div>
+
+      <Stepper steps={['Experiencia', 'Cuándo y quiénes', 'Presupuesto']} current={step} />
+
+      <div style={{ maxWidth: 720, margin: '0 auto' }}>
+        {step === 1 && (
+          <>
+            <h2 style={{ margin: '0 0 8px', fontFamily: SPOTA.font.ui, fontSize: 26, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.5 }}>
+              ¿Qué <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', color: SPOTA.c.secondary, fontWeight: 400 }}>experiencia</span> buscás?
+            </h2>
+            <p style={{ margin: '0 0 24px', fontFamily: SPOTA.font.ui, fontSize: 14.5, color: SPOTA.c.textSoft }}>Contale a los hosts qué te gustaría vivir.</p>
+            <label style={{ display: 'block', marginBottom: 6, fontFamily: SPOTA.font.ui, fontSize: 13, fontWeight: 600, color: SPOTA.c.textSoft }}>Tipo de experiencia</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 14px', height: 48, borderRadius: 12, background: SPOTA.c.surface, border: `1.5px solid ${SPOTA.c.line}`, marginBottom: 16 }}>
+              <Icon name="sparkles" size={18} color={SPOTA.c.textSoft} />
+              <input value={type} onChange={(e) => setType(e.target.value)} style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', fontFamily: SPOTA.font.ui, fontSize: 15, color: SPOTA.c.text }} />
+            </div>
+            <label style={{ display: 'block', marginBottom: 6, fontFamily: SPOTA.font.ui, fontSize: 13, fontWeight: 600, color: SPOTA.c.textSoft }}>Descripción</label>
+            <textarea defaultValue="Quiero recorrer cafés de especialidad por Palermo y Villa Crespo. Nos gusta charlar con baristas y conocer la historia de cada lugar." style={{
+              width: '100%', minHeight: 140, padding: 14, borderRadius: 12, boxSizing: 'border-box',
+              border: `1.5px solid ${SPOTA.c.line}`, background: SPOTA.c.surface,
+              fontFamily: SPOTA.font.ui, fontSize: 14.5, color: SPOTA.c.text, outline: 'none', resize: 'vertical',
+            }} />
+          </>
+        )}
+
+        {step === 2 && (
+          <>
+            <h2 style={{ margin: '0 0 8px', fontFamily: SPOTA.font.ui, fontSize: 26, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.5 }}>¿Cuándo y con quién?</h2>
+            <p style={{ margin: '0 0 24px', fontFamily: SPOTA.font.ui, fontSize: 14.5, color: SPOTA.c.textSoft }}>Spota va a usar estos datos para sugerir hosts disponibles.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {[
+                { label: 'Fecha', val: 'Sábado 17 de mayo', icon: 'calendar' },
+                { label: 'Horario', val: '14:00 - 18:00 hs', icon: 'clock' },
+                { label: 'Zona', val: 'Palermo, Villa Crespo', icon: 'pin' },
+              ].map(f => (
+                <div key={f.label}>
+                  <label style={{ display: 'block', marginBottom: 6, fontFamily: SPOTA.font.ui, fontSize: 13, fontWeight: 600, color: SPOTA.c.textSoft }}>{f.label}</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 14px', height: 48, borderRadius: 12, background: SPOTA.c.surface, border: `1.5px solid ${SPOTA.c.line}` }}>
+                    <Icon name={f.icon} size={18} color={SPOTA.c.textSoft} />
+                    <input defaultValue={f.val} style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', fontFamily: SPOTA.font.ui, fontSize: 15, color: SPOTA.c.text }} />
+                  </div>
+                </div>
+              ))}
+              <div style={{ background: SPOTA.c.surface, borderRadius: 12, padding: 16, border: `1.5px solid ${SPOTA.c.line}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                  <span style={{ fontFamily: SPOTA.font.ui, fontWeight: 600, fontSize: 14, color: SPOTA.c.text }}>Cantidad de personas</span>
+                  <span style={{ fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 18, color: SPOTA.c.primary }}>{people}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <button onClick={() => setPeople(Math.max(1, people - 1))} style={{ width: 40, height: 40, borderRadius: 999, border: `1.5px solid ${SPOTA.c.line}`, background: SPOTA.c.bg, cursor: 'pointer', fontSize: 20, color: SPOTA.c.text }}>−</button>
+                  <input type="range" min="1" max="10" value={people} onChange={(e) => setPeople(+e.target.value)} style={{ flex: 1, accentColor: SPOTA.c.primary }} />
+                  <button onClick={() => setPeople(Math.min(10, people + 1))} style={{ width: 40, height: 40, borderRadius: 999, border: `1.5px solid ${SPOTA.c.line}`, background: SPOTA.c.bg, cursor: 'pointer', fontSize: 20, color: SPOTA.c.text }}>+</button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {step === 3 && (
+          <>
+            <h2 style={{ margin: '0 0 8px', fontFamily: SPOTA.font.ui, fontSize: 26, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.5 }}>¿Cuánto querés gastar?</h2>
+            <p style={{ margin: '0 0 24px', fontFamily: SPOTA.font.ui, fontSize: 14.5, color: SPOTA.c.textSoft }}>
+              Es un presupuesto orientativo. Los hosts ajustan su propuesta a partir de este valor.
+            </p>
+            <div style={{ background: SPOTA.c.surface, borderRadius: 16, padding: 28, border: `1px solid ${SPOTA.c.lineSoft}`, textAlign: 'center', marginBottom: 16 }}>
+              <p style={{ margin: '0 0 8px', fontFamily: SPOTA.font.ui, fontSize: 13.5, color: SPOTA.c.textSoft }}>Presupuesto por persona</p>
+              <h2 style={{ margin: '0 0 18px', fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 48, color: SPOTA.c.primary, letterSpacing: -1 }}>${budget.toLocaleString('es-AR')}</h2>
+              <input type="range" min="3000" max="25000" step="500" value={budget} onChange={(e) => setBudget(+e.target.value)} style={{ width: '100%', accentColor: SPOTA.c.primary }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+                <span style={{ fontFamily: SPOTA.font.ui, fontSize: 12, color: SPOTA.c.textMuted }}>$3.000</span>
+                <span style={{ fontFamily: SPOTA.font.ui, fontSize: 12, color: SPOTA.c.textMuted }}>$25.000</span>
+              </div>
+            </div>
+            <div style={{ padding: 14, borderRadius: 12, background: SPOTA.c.primarySoft, border: `1px dashed ${SPOTA.c.primary}`, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <Icon name="shield" size={18} color={SPOTA.c.primary} />
+              <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.primaryDark, lineHeight: 1.45 }}>
+                Spota cobra una comisión del 12 %. La plata queda en custodia hasta que termine la experiencia.
+              </p>
+            </div>
+          </>
+        )}
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 32, gap: 10 }}>
+          {step > 1 && <Btn variant="ghost" onClick={back}>Atrás</Btn>}
+          <Btn variant="primary" size="lg" iconRight={step < total ? 'arrowRight' : 'check'} onClick={next}>
+            {step < total ? 'Continuar' : 'Publicar oferta'}
+          </Btn>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// CU-16: Contratar Host — lista de postulaciones a una oferta
+const ScreenHireHost = ({ nav, params }) => {
+  const offer = OFFERS.find(o => o.id === params?.id) || OFFERS[0];
+  const [selected, setSelected] = React.useState(null);
+
+  return (
+    <section>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.textSoft }}>
+        <button onClick={() => nav('hostMarketplace')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: SPOTA.c.textSoft, fontFamily: SPOTA.font.ui, fontSize: 13, padding: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <Icon name="arrowLeft" size={14} /> Marketplace
+        </button>
+        <span style={{ color: SPOTA.c.textMuted }}>/</span>
+        <span style={{ color: SPOTA.c.text, fontWeight: 600 }}>Postulaciones</span>
+      </div>
+
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ margin: '0 0 6px', fontFamily: SPOTA.font.ui, fontSize: 28, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.5 }}>{offer.title}</h1>
+        <p style={{ margin: '0 0 14px', fontFamily: SPOTA.font.ui, fontSize: 14.5, color: SPOTA.c.textSoft }}>
+          {offer.date} · {offer.people} personas · {offer.hood} · hasta ${offer.budget.toLocaleString('es-AR')} / persona
+        </p>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 999, background: SPOTA.c.primarySoft }}>
+          <Icon name="sparkles" size={15} color={SPOTA.c.primary} />
+          <span style={{ fontFamily: SPOTA.font.ui, fontWeight: 600, fontSize: 13, color: SPOTA.c.primaryDark }}>
+            {HOSTS.length} hosts se postularon a tu oferta
+          </span>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 16 }}>
+        {HOSTS.map(h => {
+          const on = selected === h.id;
+          return (
+            <div key={h.id} style={{
+              background: SPOTA.c.surface, borderRadius: 16, padding: 18,
+              border: `1.5px solid ${on ? SPOTA.c.primary : SPOTA.c.lineSoft}`,
+              boxShadow: on ? SPOTA.shadow.cardHover : SPOTA.shadow.card,
+            }}>
+              <div style={{ display: 'flex', gap: 14, marginBottom: 12 }}>
+                <Avatar name={h.name} size={56} score={h.fama} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <h3 style={{ margin: 0, fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 16, color: SPOTA.c.text }}>{h.name}</h3>
+                    {h.verified && <Tag kind="primary" icon="verify" style={{ padding: '2px 7px', fontSize: 10.5 }}>Certificado</Tag>}
+                  </div>
+                  <p style={{ margin: '2px 0 6px', fontFamily: SPOTA.font.ui, fontSize: 12.5, color: SPOTA.c.textSoft }}>
+                    <Icon name="pin" size={11} color={SPOTA.c.textSoft} /> {h.hood} · {h.reviews} experiencias
+                  </p>
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                    {h.expertise.map(e => <Tag key={e} kind="softG">{e}</Tag>)}
+                  </div>
+                </div>
+              </div>
+              <p style={{ margin: '0 0 12px', fontFamily: SPOTA.font.ui, fontSize: 13.5, color: SPOTA.c.text, lineHeight: 1.5 }}>{h.bio}</p>
+              <div style={{ paddingTop: 12, borderTop: `1px solid ${SPOTA.c.lineSoft}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <span style={{ fontFamily: SPOTA.font.ui, fontSize: 11, color: SPOTA.c.textSoft, textTransform: 'uppercase', letterSpacing: 0.4 }}>Propuesta</span>
+                  <div style={{ fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 18, color: SPOTA.c.text }}>
+                    ${h.price.toLocaleString('es-AR')}<span style={{ fontSize: 12, color: SPOTA.c.textSoft, fontWeight: 500 }}> /persona</span>
+                  </div>
+                </div>
+                <Btn variant={on ? 'primary' : 'outline'} onClick={() => setSelected(h.id)} icon={on ? 'check' : undefined}>
+                  {on ? 'Elegido' : 'Elegir'}
+                </Btn>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {selected && (
+        <div style={{
+          position: 'sticky', bottom: 16, marginTop: 24,
+          padding: 16, borderRadius: 14,
+          background: SPOTA.c.surface, border: `1px solid ${SPOTA.c.line}`,
+          boxShadow: SPOTA.shadow.pop, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16,
+          animation: 'fadeIn 200ms',
+        }}>
+          <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 13.5, color: SPOTA.c.text }}>
+            Vas a contratar a <strong>{HOSTS.find(h => h.id === selected).name}</strong>. La plata queda en custodia hasta que termine la experiencia.
+          </p>
+          <Btn variant="primary" size="lg" icon="wallet" onClick={() => nav('plans')}>Contratar y pagar</Btn>
+        </div>
+      )}
+    </section>
+  );
+};
+
+// CU-17: Registrarse como Host
+const ScreenRegisterHost = ({ nav }) => {
+  const [type, setType] = React.useState(null);
+  return (
+    <section>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.textSoft }}>
+        <button onClick={() => nav('profile')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: SPOTA.c.textSoft, fontFamily: SPOTA.font.ui, fontSize: 13, padding: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <Icon name="arrowLeft" size={14} /> Perfil
+        </button>
+        <span style={{ color: SPOTA.c.textMuted }}>/</span>
+        <span style={{ color: SPOTA.c.text, fontWeight: 600 }}>Ser host</span>
+      </div>
+
+      <div style={{ maxWidth: 720, margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <div style={{ width: 80, height: 80, borderRadius: 999, background: SPOTA.c.accentSoft, margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="briefcase" size={36} color={SPOTA.c.secondary} />
+          </div>
+          <h1 style={{ margin: '0 0 6px', fontFamily: SPOTA.font.ui, fontSize: 28, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.5 }}>
+            Compartí lo que <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', color: SPOTA.c.secondary, fontWeight: 400 }}>sabés</span>
+          </h1>
+          <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 14.5, color: SPOTA.c.textSoft, lineHeight: 1.55 }}>
+            Elegí cómo querés sumarte. Podés cambiar de modalidad después.
+          </p>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 24 }}>
+          {[
+            { id: 'casual', t: 'Host casual', s: 'Datos básicos, zona y disponibilidad. Aprobación inmediata.', tag: 'Más rápido', icon: 'sparkles', color: SPOTA.c.secondary },
+            { id: 'cert', t: 'Host certificado', s: 'Profesional con portfolio y verificación. Acceso a ofertas premium y comisión menor.', tag: 'Premium', icon: 'verify', color: SPOTA.c.primary },
+          ].map(o => {
+            const on = type === o.id;
+            return (
+              <button key={o.id} onClick={() => setType(o.id)} style={{
+                padding: 18, borderRadius: 16,
+                background: on ? SPOTA.c.primarySoft : SPOTA.c.surface,
+                border: `1.5px solid ${on ? SPOTA.c.primary : SPOTA.c.lineSoft}`,
+                cursor: 'pointer', textAlign: 'left',
+              }}>
+                <div style={{ width: 48, height: 48, borderRadius: 12, background: o.color, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+                  <Icon name={o.icon} size={22} color="#fff" />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                  <h3 style={{ margin: 0, fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 16, color: SPOTA.c.text }}>{o.t}</h3>
+                  <Tag kind="softA">{o.tag}</Tag>
+                </div>
+                <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 13.5, color: SPOTA.c.textSoft, lineHeight: 1.5 }}>{o.s}</p>
+              </button>
+            );
+          })}
+        </div>
+
+        {type && (
+          <div style={{ animation: 'fadeIn 200ms' }}>
+            <h3 style={{ margin: '0 0 14px', fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 17, color: SPOTA.c.text }}>
+              {type === 'casual' ? 'Datos básicos' : 'Tu portfolio profesional'}
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {[
+                { label: 'Tu zona principal', val: 'Palermo', icon: 'pin' },
+                { label: 'Tipo de experiencia', val: 'Cafés de especialidad', icon: 'coffee' },
+                ...(type === 'cert' ? [
+                  { label: 'Credencial / título', val: '', placeholder: 'Ej. Guía profesional CABA', icon: 'verify' },
+                  { label: 'Link de portfolio', val: '', placeholder: 'https://...', icon: 'globe' },
+                ] : []),
+              ].map(f => (
+                <div key={f.label}>
+                  <label style={{ display: 'block', marginBottom: 6, fontFamily: SPOTA.font.ui, fontSize: 13, fontWeight: 600, color: SPOTA.c.textSoft }}>{f.label}</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 14px', height: 48, borderRadius: 12, background: SPOTA.c.surface, border: `1.5px solid ${SPOTA.c.line}` }}>
+                    <Icon name={f.icon} size={18} color={SPOTA.c.textSoft} />
+                    <input defaultValue={f.val} placeholder={f.placeholder} style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', fontFamily: SPOTA.font.ui, fontSize: 15, color: SPOTA.c.text }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end' }}>
+              <Btn variant="primary" size="lg" icon="check" onClick={() => nav('hostDashboard')}>Crear perfil de host</Btn>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+};
+
+// CU-18: Postularse a Oferta de Viaje (Dashboard del host)
+const ScreenHostDashboard = ({ nav }) => {
+  const [applying, setApplying] = React.useState(null);
+  return (
+    <section>
+      {/* Hero del host */}
+      <div style={{ background: `linear-gradient(135deg, ${SPOTA.c.secondary}, ${SPOTA.c.secondaryDark})`, color: '#fff', borderRadius: 18, padding: 24, marginBottom: 24, display: 'flex', alignItems: 'center', gap: 16 }}>
+        <Avatar name="Federico M." size={72} />
+        <div style={{ flex: 1 }}>
+          <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 12.5, opacity: 0.9, textTransform: 'uppercase', letterSpacing: 0.4 }}>Modo Host · Certificado</p>
+          <h1 style={{ margin: '4px 0 2px', fontFamily: SPOTA.font.ui, fontSize: 26, fontWeight: 700, letterSpacing: -0.5 }}>Federico M.</h1>
+          <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 14, opacity: 0.92 }}>Fama 4.9 · 87 experiencias · Palermo</p>
+        </div>
+        <Btn variant="ghost" icon="settings" style={{ background: 'rgba(255,255,255,0.18)', color: '#fff', borderColor: 'transparent' }}>Editar perfil</Btn>
+      </div>
+
+      {/* KPIs */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 28 }}>
+        {[
+          { n: '3', l: 'Postulaciones activas', i: 'send' },
+          { n: '2', l: 'Contratos firmados', i: 'check' },
+          { n: '$48.500', l: 'Ingresos del mes', i: 'wallet' },
+          { n: '4.9', l: 'Tu Fama', i: 'star' },
+        ].map(s => (
+          <div key={s.l} style={{ padding: 18, background: SPOTA.c.surface, borderRadius: 14, border: `1px solid ${SPOTA.c.lineSoft}` }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+              <Icon name={s.i} size={16} color={SPOTA.c.primary} />
+              <span style={{ fontFamily: SPOTA.font.ui, fontSize: 12, color: SPOTA.c.textSoft, textTransform: 'uppercase', letterSpacing: 0.4 }}>{s.l}</span>
+            </div>
+            <div style={{ fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 26, color: SPOTA.c.text, letterSpacing: -0.5 }}>{s.n}</div>
+          </div>
+        ))}
+      </div>
+
+      <h2 style={{ margin: '0 0 16px', fontFamily: SPOTA.font.ui, fontSize: 20, fontWeight: 700, color: SPOTA.c.text }}>Ofertas en tu zona</h2>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 14 }}>
+        {OFFERS.map(o => {
+          const on = applying === o.id;
+          return (
+            <div key={o.id} style={{
+              background: SPOTA.c.surface, borderRadius: 14, padding: 16,
+              border: `1.5px solid ${on ? SPOTA.c.primary : SPOTA.c.lineSoft}`,
+              boxShadow: SPOTA.shadow.card,
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10, gap: 12 }}>
+                <div>
+                  <h3 style={{ margin: 0, fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 16, color: SPOTA.c.text }}>{o.title}</h3>
+                  <p style={{ margin: '2px 0 0', fontFamily: SPOTA.font.ui, fontSize: 12.5, color: SPOTA.c.textSoft }}>
+                    por {o.user} · {o.date} · {o.people} personas
+                  </p>
+                </div>
+                <Tag kind="softG" icon="pin">{o.hood}</Tag>
+              </div>
+              <div style={{ paddingTop: 12, borderTop: `1px solid ${SPOTA.c.lineSoft}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <span style={{ fontFamily: SPOTA.font.ui, fontSize: 11, color: SPOTA.c.textSoft, textTransform: 'uppercase', letterSpacing: 0.4 }}>Budget</span>
+                  <div style={{ fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 16, color: SPOTA.c.text }}>${o.budget.toLocaleString('es-AR')}</div>
+                </div>
+                <Btn variant={on ? 'primary' : 'outline'} onClick={() => setApplying(on ? null : o.id)} icon={on ? 'check' : undefined}>
+                  {on ? 'Postulado' : 'Postularme'}
+                </Btn>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+};
+
+Object.assign(window, { ScreenHostMarketplace, ScreenCreateOffer, ScreenHireHost, ScreenRegisterHost, ScreenHostDashboard });
+</script>
+
 <!-- app.jsx -->
 <script type="text/babel" data-presets="react">
 // Pantalla "en construcción" para rutas todavía no implementadas en este protoype.
@@ -1804,6 +2274,11 @@ const SCREENS = {
   createPlan:       ScreenCreatePlan,
   planVote:         ScreenPlanVote,
   planClose:        ScreenPlanClose,
+  hostMarketplace:  ScreenHostMarketplace,
+  createOffer:      ScreenCreateOffer,
+  hireHost:         ScreenHireHost,
+  registerHost:     ScreenRegisterHost,
+  hostDashboard:    ScreenHostDashboard,
   uikit:            ScreenDesignSystem,
   profile:          ScreenSoon,
 };
@@ -1815,6 +2290,11 @@ const NAV_PARENT = {
   createPlan: 'plans',
   planVote: 'plans',
   planClose: 'plans',
+  hostMarketplace: 'plans',
+  createOffer: 'plans',
+  hireHost: 'plans',
+  registerHost: 'profile',
+  hostDashboard: 'profile',
 };
 
 function App() {
