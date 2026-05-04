@@ -304,3 +304,40 @@ Las decisiones que siguen no estaban en el brief original y se tomaron durante l
    | Botón Cancelar | No | Sí |
 
    El formulario subyacente es idéntico (tipos de experiencia, zonas, contexto, frecuencia). La decisión refleja una observación más general: **las pantallas de configuración del usuario casi siempre tienen dos modos** (onboarding y edit) y el costo de separarlas en dos componentes es mayor que el costo de un flag de modo. El mobile aplica el mismo principio en su `ScreenPreferences` (donde el wizard de onboarding y el editor de prefs son el mismo componente reactivo). Generalizar este patrón a otras pantallas (`ScreenCredentials`, `ScreenEditProfile`) queda anotado en backlog como una mejora consistente de futuro.
+
+12. **Welcome y Login unificados en mobile.** El brief original tenía dos pantallas separadas: `ScreenSplash` (welcome con foto + hero + CTAs Crear cuenta / Ya tengo cuenta) y `ScreenLogin` (form sobre crema con botón volver al splash). Durante la iteración del prototipo se evaluó si las dos pantallas justificaban el tap-count que costaban. La conclusión: no.
+
+   La unificación funciona porque las dos pantallas compartían propósito (presentar la marca y mover al usuario a entrar) y diferían solo en granularidad. El login pasó a ser la primera pantalla, con el background de foto + gradient heredado del splash y el form sobre la foto. El logo terracota vive arriba del form. El hero "Lo bueno está cerca tuyo" se eliminó del mobile — la foto ya comunica la marca y el form deja en claro la acción.
+
+   **Lo que se ganó:**
+   - Un tap menos para entrar (no hay pantalla intermedia entre abrir la app y poner email + password).
+   - Cero pantallas en frío que el usuario "tiene que mirar antes de hacer algo".
+   - Coherencia: la primera pantalla muestra marca + acción a la vez.
+
+   **Trade-off aceptado:**
+   - Se pierde la pantalla de "presentación pura" donde el usuario podía leer el pitch sin presión de auth. En el desktop esa función la cumple `ScreenWelcome` (que no se eliminó porque ahí el espacio sobra). En mobile se decidió que la pérdida es bajo precio frente al ahorro de tap-count.
+
+   **Implementación visual:** foto Café Palermo + `linear-gradient(180deg, rgba(43,37,35,0.40) 0%, rgba(43,37,35,0.75) 50%, rgba(43,37,35,0.95) 100%)`. Más oscuro que el gradient original del splash, porque acá el contenido vive en la franja media (no al pie). Textos blancos con `text-shadow` y el componente `Field` extendido con `prop onDark` para que las labels se vean blancas. Pin del logo en terracota (no verde primario) para no competir con el ambiente verde-petróleo del fondo de la imagen.
+
+13. **Desktop login con layout split.** El desktop maneja el espacio de pantalla muy distinto al mobile. Replicar el "login con foto fullscreen" de mobile en desktop dejaría una foto enorme detrás de un form chico — desproporcionado. La solución elegida es el patrón **split layout**, estándar en SaaS modernos: dos columnas, izquierda con foto + hero (función de marketing), derecha con form (función transaccional).
+
+   Distribución concreta: 55 % izquierda / 45 % derecha. El panel izquierdo contiene el background de foto + gradient (igual que el de mobile, más oscuro al pie) con el hero "Lo bueno está cerca tuyo" anclado abajo. El panel derecho contiene el form completo (logo terracota + título + toggle Usuario/Negocio + email + password + olvidaste + iniciar sesión + footer "¿No tenés cuenta?"). El logo vive con el form, no con la foto — el panel izquierdo es marca pura sin chrome funcional.
+
+   **Toggle Split/Centrado evaluado y descartado:** durante el prototipo hubo una pill toggle en la esquina superior derecha que alternaba entre `split` y `centered` (form centrado sobre crema sin foto). Sirvió para hacer A/B y validar que el split era la mejor opción. Una vez tomada la decisión, el toggle y el modo `centered` se retiraron del código para no acumular variantes muertas. El componente quedó simplificado a un único layout split.
+
+   **Por qué split y no foto fullscreen con card flotante:**
+   - Una foto fullscreen detrás de un card de 480 px deja la foto como decoración irrelevante.
+   - El split le da rol funcional a cada lado: el izquierdo es marketing/marca, el derecho es transacción.
+   - Las fotos portrait (como el Café Palermo) encajan perfecto en una mitad vertical, mientras que estiradas a un fullscreen landscape se pixelan o cropean mal.
+
+14. **Back contextual de `ScreenBizRegister` (`params.from`).** El panel de Negocios tiene tres entry points distintos (D3 honrada): el footer del `DesktopFrame` cuando el usuario está autenticado, el link "¿Tenés un negocio?" en `ScreenWelcome`, y el link "Sumalo" en el footer de `ScreenLogin`. Originalmente el back link de `bizRegister` siempre decía "¿Volvés a la app? Vista usuario" → `home` — copy que asumía que el usuario venía de un estado autenticado.
+
+   La asimetría se resolvió con un parámetro `from` que la pantalla lee y mapea a un par (copy, destino):
+
+   | `params.from` | Copy | Destino |
+   |---|---|---|
+   | `home` | "¿Volvés a la app? Vista usuario" | home |
+   | `login` | "¿Te equivocaste? Volver al login" | login |
+   | `welcome` | "¿Querés explorar antes? Volver" | welcome |
+
+   Es el mismo patrón conceptual que D14 (`mode` flag de Preferences) — una sola pantalla que reacciona a su contexto de origen. La regla generalizable es: **cuando una pantalla tiene varios entry points y el "back" depende del origen, pasar el origen como param es más barato que duplicar la pantalla**. Aplicable a futuro a otras pantallas con back contextual (recuperación de contraseña, on-boarding flows, etc.).

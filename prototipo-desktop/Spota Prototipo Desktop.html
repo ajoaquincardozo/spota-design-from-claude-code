@@ -3130,125 +3130,85 @@ const ScreenWelcome = ({ nav }) => (
   </div>
 );
 
-// Login — con toggle Usuario / Negocio (D3: una sola entry de auth, dos contextos)
+// Login desktop — split layout (D16). 55% foto+hero a la izquierda, 45% form a la derecha.
+// Toggle Usuario/Negocio dentro del form (D3: una sola entry de auth, dos contextos).
 const ScreenLogin = ({ nav }) => {
   const [profile, setProfile] = React.useState('user');
-  const [layoutMode, setLayoutMode] = React.useState('split'); // split | centered — toggle de prueba visual
   const isBiz = profile === 'biz';
   const accent = isBiz ? SPOTA.c.secondary : SPOTA.c.primary;
-  const isSplit = layoutMode === 'split';
 
-  // Contenido del form — reutilizable en ambos layouts. El logo va arriba del form
-  // con pin terracota (coherente con el login mobile).
-  const formContent = (
-    <>
-      <div style={{ marginBottom: 18 }}>
-        <SpotaLogo size={28} color={SPOTA.c.secondary} />
-        <h1 style={{ margin: '20px 0 6px', fontFamily: SPOTA.font.ui, fontSize: 26, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.5 }}>
-          {isBiz
-            ? <>Entrá a tu <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', color: SPOTA.c.secondary, fontWeight: 400 }}>panel</span></>
-            : <>Iniciá <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', color: SPOTA.c.secondary, fontWeight: 400 }}>sesión</span></>}
+  return (
+    <div style={{ minHeight: '100vh', display: 'grid', gridTemplateColumns: '55fr 45fr', background: SPOTA.c.bg }}>
+      {/* Left: foto + gradient + hero. El logo vive con el form, no acá. */}
+      <div style={{
+        position: 'relative', overflow: 'hidden',
+        backgroundImage: `linear-gradient(180deg, rgba(43,37,35,0.40) 0%, rgba(43,37,35,0.65) 50%, rgba(43,37,35,0.92) 100%), url(${photo('cafePalermo', 1600, 2000)})`,
+        backgroundSize: 'cover', backgroundPosition: 'center',
+        color: '#fff',
+        display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
+        padding: '40px 48px',
+      }}>
+        <h1 style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 48, fontWeight: 700, letterSpacing: -1.2, lineHeight: 1.05, textShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>
+          Lo bueno está <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', color: SPOTA.c.accent, fontWeight: 400 }}>cerca tuyo</span>.
         </h1>
-        <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 14, color: SPOTA.c.textSoft }}>
-          {isBiz ? 'Gestioná beneficios, campañas e insights de tu local.' : 'Volvé a tus experiencias y planes guardados.'}
+        <p style={{ margin: '18px 0 0', fontFamily: SPOTA.font.ui, fontSize: 17, opacity: 0.92, lineHeight: 1.5, maxWidth: 460, textShadow: '0 1px 4px rgba(0,0,0,0.35)' }}>
+          Descubrí lugares reales que recomienda gente real, en tu barrio.
         </p>
       </div>
-      {/* Toggle Usuario / Negocio */}
-      <div style={{ display: 'inline-flex', padding: 3, borderRadius: 999, background: SPOTA.c.bg, border: `1px solid ${SPOTA.c.line}`, marginBottom: 18 }}>
-        {[{ id: 'user', t: 'Usuario' }, { id: 'biz', t: 'Negocio' }].map(o => {
-          const on = profile === o.id;
-          return (
-            <button key={o.id} onClick={() => setProfile(o.id)} style={{
-              padding: '8px 18px', borderRadius: 999, border: 'none', cursor: 'pointer',
-              background: on ? accent : 'transparent',
-              color: on ? '#fff' : SPOTA.c.textSoft,
-              fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 13, letterSpacing: 0.2,
-              transition: 'all 180ms',
-            }}>{o.t}</button>
-          );
-        })}
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <AuthField label="Email" icon="mail" type="email" autoComplete="email" placeholder={isBiz ? 'negocio@correo.com' : 'vos@correo.com'} />
-        <AuthField label="Contraseña" icon="lock" type="password" autoComplete="current-password" placeholder="Tu contraseña" />
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
-        <a onClick={() => nav('recover')} style={{ fontFamily: SPOTA.font.ui, fontSize: 13, color: accent, fontWeight: 600, cursor: 'pointer' }}>
-          ¿Olvidaste tu contraseña?
-        </a>
-      </div>
-      <div style={{ marginTop: 18 }}>
-        <Btn variant={isBiz ? 'secondary' : 'primary'} size="lg" full onClick={() => nav(isBiz ? 'bizHome' : 'home')}>
-          Iniciar sesión
-        </Btn>
-      </div>
-    </>
-  );
 
-  const footerContent = (
-    <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 13.5, color: SPOTA.c.textSoft }}>
-      {isBiz
-        ? <>¿Aún no registraste tu negocio? <a onClick={() => nav('bizRegister', { from: 'login' })} style={{ color: SPOTA.c.secondary, fontWeight: 700, cursor: 'pointer' }}>Sumalo</a></>
-        : <>¿No tenés cuenta? <a onClick={() => nav('register')} style={{ color: SPOTA.c.primary, fontWeight: 700, cursor: 'pointer' }}>Crear cuenta</a></>}
-    </p>
-  );
-
-  // Toggle pill (Split / Centered) — esquina superior derecha. Visible siempre durante prueba.
-  const layoutToggle = (
-    <button onClick={() => setLayoutMode(m => m === 'split' ? 'centered' : 'split')} title="Alternar layout" style={{
-      position: 'fixed', top: 16, right: 16, height: 32, padding: '0 12px', borderRadius: 999,
-      border: 'none', background: SPOTA.c.surface, cursor: 'pointer',
-      boxShadow: '0 1px 4px rgba(43,37,35,0.15)', zIndex: 100,
-      fontFamily: SPOTA.font.ui, fontSize: 11.5, fontWeight: 700, color: SPOTA.c.text,
-      display: 'inline-flex', alignItems: 'center', gap: 5,
-    }}>
-      <Icon name="photo" size={13} color={SPOTA.c.text} /> {isSplit ? 'Split' : 'Centrado'}
-    </button>
-  );
-
-  if (!isSplit) {
-    // Modo "centered" — AuthCard centrado. El logo terracota vive dentro del formContent.
-    return (
-      <>
-        {layoutToggle}
-        <AuthCard footer={footerContent}>{formContent}</AuthCard>
-      </>
-    );
-  }
-
-  // Modo "split" — panel izquierdo con foto + brand, panel derecho con form
-  return (
-    <>
-      {layoutToggle}
-      <div style={{ minHeight: '100vh', display: 'grid', gridTemplateColumns: '55fr 45fr', background: SPOTA.c.bg }}>
-        {/* Left: photo + gradient + hero. El logo vive con el form, no acá. */}
-        <div style={{
-          position: 'relative', overflow: 'hidden',
-          backgroundImage: `linear-gradient(180deg, rgba(43,37,35,0.40) 0%, rgba(43,37,35,0.65) 50%, rgba(43,37,35,0.92) 100%), url(${photo('cafePalermo', 1600, 2000)})`,
-          backgroundSize: 'cover', backgroundPosition: 'center',
-          color: '#fff',
-          display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
-          padding: '40px 48px',
-        }}>
-          <h1 style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 48, fontWeight: 700, letterSpacing: -1.2, lineHeight: 1.05, textShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>
-            Lo bueno está <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', color: SPOTA.c.accent, fontWeight: 400 }}>cerca tuyo</span>.
-          </h1>
-          <p style={{ margin: '18px 0 0', fontFamily: SPOTA.font.ui, fontSize: 17, opacity: 0.92, lineHeight: 1.5, maxWidth: 460, textShadow: '0 1px 4px rgba(0,0,0,0.35)' }}>
-            Descubrí lugares reales que recomienda gente real, en tu barrio.
-          </p>
-        </div>
-
-        {/* Right: form */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 48px', overflowY: 'auto' }}>
-          <div style={{ maxWidth: 420, width: '100%' }}>
-            {formContent}
-            <div style={{ marginTop: 22, paddingTop: 18, borderTop: `1px solid ${SPOTA.c.lineSoft}`, textAlign: 'center' }}>
-              {footerContent}
-            </div>
+      {/* Right: form */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 48px', overflowY: 'auto' }}>
+        <div style={{ maxWidth: 420, width: '100%' }}>
+          <div style={{ marginBottom: 18 }}>
+            <SpotaLogo size={28} color={SPOTA.c.secondary} />
+            <h1 style={{ margin: '20px 0 6px', fontFamily: SPOTA.font.ui, fontSize: 26, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.5 }}>
+              {isBiz
+                ? <>Entrá a tu <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', color: SPOTA.c.secondary, fontWeight: 400 }}>panel</span></>
+                : <>Iniciá <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', color: SPOTA.c.secondary, fontWeight: 400 }}>sesión</span></>}
+            </h1>
+            <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 14, color: SPOTA.c.textSoft }}>
+              {isBiz ? 'Gestioná beneficios, campañas e insights de tu local.' : 'Volvé a tus experiencias y planes guardados.'}
+            </p>
+          </div>
+          {/* Toggle Usuario / Negocio */}
+          <div style={{ display: 'inline-flex', padding: 3, borderRadius: 999, background: SPOTA.c.bg, border: `1px solid ${SPOTA.c.line}`, marginBottom: 18 }}>
+            {[{ id: 'user', t: 'Usuario' }, { id: 'biz', t: 'Negocio' }].map(o => {
+              const on = profile === o.id;
+              return (
+                <button key={o.id} onClick={() => setProfile(o.id)} style={{
+                  padding: '8px 18px', borderRadius: 999, border: 'none', cursor: 'pointer',
+                  background: on ? accent : 'transparent',
+                  color: on ? '#fff' : SPOTA.c.textSoft,
+                  fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 13, letterSpacing: 0.2,
+                  transition: 'all 180ms',
+                }}>{o.t}</button>
+              );
+            })}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <AuthField label="Email" icon="mail" type="email" autoComplete="email" placeholder={isBiz ? 'negocio@correo.com' : 'vos@correo.com'} />
+            <AuthField label="Contraseña" icon="lock" type="password" autoComplete="current-password" placeholder="Tu contraseña" />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
+            <a onClick={() => nav('recover')} style={{ fontFamily: SPOTA.font.ui, fontSize: 13, color: accent, fontWeight: 600, cursor: 'pointer' }}>
+              ¿Olvidaste tu contraseña?
+            </a>
+          </div>
+          <div style={{ marginTop: 18 }}>
+            <Btn variant={isBiz ? 'secondary' : 'primary'} size="lg" full onClick={() => nav(isBiz ? 'bizHome' : 'home')}>
+              Iniciar sesión
+            </Btn>
+          </div>
+          <div style={{ marginTop: 22, paddingTop: 18, borderTop: `1px solid ${SPOTA.c.lineSoft}`, textAlign: 'center' }}>
+            <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 13.5, color: SPOTA.c.textSoft }}>
+              {isBiz
+                ? <>¿Aún no registraste tu negocio? <a onClick={() => nav('bizRegister', { from: 'login' })} style={{ color: SPOTA.c.secondary, fontWeight: 700, cursor: 'pointer' }}>Sumalo</a></>
+                : <>¿No tenés cuenta? <a onClick={() => nav('register')} style={{ color: SPOTA.c.primary, fontWeight: 700, cursor: 'pointer' }}>Crear cuenta</a></>}
+            </p>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
