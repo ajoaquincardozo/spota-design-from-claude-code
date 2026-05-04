@@ -157,12 +157,13 @@ Los negocios reclaman su perfil, publican beneficios exclusivos, configuran camp
 
 ### Accesos secundarios
 - **Marketplace de Hosts:** accesible desde perfil o desde descubrimiento
-- **Registrarse como Host:** desde menú de perfil, flujo diferenciado
+- **Registrarse como Host:** desde menú de perfil, flujo diferenciado (es una evolución natural del rol del usuario — cualquier persona puede convertir su conocimiento local en servicio)
 - **Postularse a Oferta:** dashboard del host dentro de su perfil
 
 ### App de negocios (login separado)
 - Dashboard principal con accesos a: CU-19, CU-20, CU-21, CU-22, CU-23
 - Flujo independiente del usuario — el negocio tiene su propio login y panel
+- **Asimetría con Host (importante):** un usuario *se vuelve* Host (extensión de identidad), pero *es* dueño de un Negocio (identidad separada). Por eso el entry point de Negocio **no aparece en el perfil del usuario**: vive solamente en (a) el splash con el link "Soy un negocio", y (b) el login dedicado al panel de negocios (toggle Usuario/Negocio).
 
 ---
 
