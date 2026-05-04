@@ -598,14 +598,6 @@ const NavIconBtn = ({ children, onClick, title, active = false, prominent = fals
 };
 
 const TopNav = ({ current, nav }) => {
-  const [searchFocused, setSearchFocused] = React.useState(false);
-  const [navQuery, setNavQuery] = React.useState('');
-  const submitNavSearch = () => {
-    const q = (navQuery || '').trim();
-    if (!q) return;
-    nav('searchResults', { query: q });
-    setNavQuery('');
-  };
   return (
     <header style={{
       position: 'sticky', top: 0, zIndex: 50,
@@ -615,15 +607,13 @@ const TopNav = ({ current, nav }) => {
       <div style={{
         maxWidth: 1440, margin: '0 auto',
         padding: '14px 32px',
-        display: 'grid', gridTemplateColumns: 'auto 1fr auto', alignItems: 'center', gap: 32,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 32,
       }}>
-        {/* Logo */}
-        <button onClick={() => nav('home')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
-          <SpotaLogo size={26} />
-        </button>
-
-        {/* Nav central + buscador */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+        {/* Logo + Nav central (agrupados a la izquierda) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
+          <button onClick={() => nav('home')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
+            <SpotaLogo size={26} />
+          </button>
           <nav style={{ display: 'flex', gap: 4 }}>
             {NAV_ITEMS.map(it => {
               const active = current === it.id;
@@ -642,36 +632,6 @@ const TopNav = ({ current, nav }) => {
               );
             })}
           </nav>
-
-          {/* Buscador global */}
-          <div style={{
-            flex: 1, maxWidth: 480,
-            display: 'flex', alignItems: 'center', gap: 10,
-            padding: '9px 14px', borderRadius: 999,
-            background: SPOTA.c.surface,
-            border: `1.5px solid ${searchFocused ? SPOTA.c.primary : SPOTA.c.line}`,
-            transition: 'border-color 150ms',
-          }}>
-            <Icon name="search" size={17} color={SPOTA.c.textSoft} />
-            <input
-              type="text"
-              placeholder="Decile lo que buscás… ej: café para trabajar"
-              value={navQuery}
-              onChange={(e) => setNavQuery(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') submitNavSearch(); }}
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
-              style={{
-                flex: 1, border: 'none', background: 'transparent', outline: 'none',
-                fontFamily: SPOTA.font.ui, fontSize: 14, color: SPOTA.c.text,
-              }}
-            />
-            <kbd style={{
-              fontFamily: SPOTA.font.ui, fontSize: 11, fontWeight: 600, color: SPOTA.c.textMuted,
-              padding: '2px 6px', borderRadius: 4, border: `1px solid ${SPOTA.c.line}`,
-              background: SPOTA.c.bgAlt,
-            }}>↵</kbd>
-          </div>
         </div>
 
         {/* Acciones derecha */}
