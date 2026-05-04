@@ -4019,6 +4019,7 @@ const ScreenProfile = ({ nav }) => (
       {[
         { id: 'preferences', t: 'Preferencias', i: 'sparkles' },
         { id: 'credentials', t: 'Credenciales y privacidad', i: 'lock' },
+        { id: 'uikit',       t: 'UI Kit · Design System',    i: 'palette' },
       ].map(o => (
         <button key={o.id} onClick={() => nav(o.id)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: 14, marginBottom: 6, background: SPOTA.c.surface, borderRadius: 12, border: `1px solid ${SPOTA.c.lineSoft}`, cursor: 'pointer', textAlign: 'left' }}>
           <Icon name={o.i} size={18} color={SPOTA.c.primary} />
@@ -4033,7 +4034,170 @@ const ScreenProfile = ({ nav }) => (
   </div>
 );
 
-Object.assign(window, { ScreenSplash, ScreenRecover, ScreenSearchResults, ScreenCollectionDetail, ScreenProfile });
+// Pantalla de referencia del design system. Accesible desde Profile > Cuenta y desde el Sidebar.
+// No es parte del flujo de producto; vive como referencia permanente de UI/UX.
+const ScreenDesignSystem = ({ nav }) => {
+  const swatches = [
+    { c: SPOTA.c.primary,   name: 'Primario',   hex: '#2F6F5E', use: 'Verde petróleo · CTAs principales, navbar, badges verificados' },
+    { c: SPOTA.c.secondary, name: 'Secundario', hex: '#B85C38', use: 'Terracota · tags Popular/Nuevo, CTAs secundarios, FAB' },
+    { c: SPOTA.c.accent,    name: 'Acento',     hex: '#E9A23B', use: 'Arena dorada · estrellas, highlights, Fama Score' },
+    { c: SPOTA.c.bg,        name: 'Fondo',      hex: '#FFF8ED', use: 'Crema · fondo general, cards, superficies' },
+    { c: SPOTA.c.text,      name: 'Texto',      hex: '#2B2523', use: 'Marrón oscuro · títulos, cuerpo, labels' },
+  ];
+
+  const sampleIcons = ['compass', 'bookmark', 'calendar', 'user', 'star', 'heart', 'pinFill', 'sparkles', 'check', 'gift', 'briefcase', 'megaphone'];
+
+  const Section = ({ title, hint, children }) => (
+    <div style={{ marginBottom: 24 }}>
+      <h3 style={{ margin: '0 0 4px', fontFamily: SPOTA.font.ui, fontSize: 11.5, fontWeight: 700, color: SPOTA.c.primary, textTransform: 'uppercase', letterSpacing: 0.6 }}>{title}</h3>
+      {hint && <p style={{ margin: '0 0 12px', fontFamily: SPOTA.font.ui, fontSize: 12.5, color: SPOTA.c.textSoft, lineHeight: 1.45 }}>{hint}</p>}
+      {!hint && <div style={{ height: 12 }} />}
+      {children}
+    </div>
+  );
+
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: SPOTA.c.bg, overflow: 'auto' }}>
+      <AppHeader title="UI Kit · Design System" leftIcon="arrowLeft" onLeft={() => nav('profile')} />
+      <div style={{ flex: 1, padding: '12px 20px 32px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+          <Icon name="sparkles" size={22} color={SPOTA.c.primary} />
+          <h1 style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 22, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.4 }}>
+            UI Kit <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', color: SPOTA.c.secondary, fontWeight: 400 }}>de Spota</span>
+          </h1>
+        </div>
+        <p style={{ margin: '0 0 20px', fontFamily: SPOTA.font.ui, fontSize: 13.5, color: SPOTA.c.textSoft, lineHeight: 1.5 }}>
+          Página de referencia del design system. Documenta paleta, tipografía y primitives. No es parte del flujo del producto.
+        </p>
+
+        {/* Paleta */}
+        <Section title="Paleta · Cercanía Local" hint="Verde petróleo + terracota + arena dorada sobre crema. Identidad cálida, barrial, no SaaS.">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {swatches.map(s => (
+              <div key={s.name} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 10, borderRadius: 12, background: SPOTA.c.surface, border: `1px solid ${SPOTA.c.lineSoft}` }}>
+                <div style={{ width: 44, height: 44, borderRadius: 10, background: s.c, border: s.c === SPOTA.c.bg ? `1px solid ${SPOTA.c.line}` : 'none', flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                    <span style={{ fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 13.5, color: SPOTA.c.text }}>{s.name}</span>
+                    <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: 11.5, color: SPOTA.c.textMuted }}>{s.hex}</span>
+                  </div>
+                  <p style={{ margin: '2px 0 0', fontFamily: SPOTA.font.ui, fontSize: 11.5, color: SPOTA.c.textSoft, lineHeight: 1.4 }}>{s.use}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Section>
+
+        {/* Tipografía */}
+        <Section title="Tipografía" hint="DM Sans para UI y cuerpo. Fraunces serif italic para acentos cortos sobre titulares.">
+          <div style={{ padding: 16, borderRadius: 14, background: SPOTA.c.surface, border: `1px solid ${SPOTA.c.lineSoft}` }}>
+            <div style={{ fontFamily: SPOTA.font.ui, fontSize: 22, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.4, lineHeight: 1.2 }}>
+              ¿Qué hacemos <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', fontWeight: 400, color: SPOTA.c.secondary }}>hoy</span>?
+            </div>
+            <p style={{ margin: '8px 0 0', fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.textSoft, lineHeight: 1.5 }}>
+              Cuerpo de texto: párrafos, bullets, copy de UI. Pesos disponibles: 400, 500, 600, 700, 800.
+            </p>
+            <div style={{ height: 1, background: SPOTA.c.lineSoft, margin: '12px 0' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'ui-monospace, monospace', fontSize: 11, color: SPOTA.c.textMuted }}>
+              <span>DM Sans</span>
+              <span>Fraunces (italic)</span>
+            </div>
+          </div>
+        </Section>
+
+        {/* Botones */}
+        <Section title="Botones">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <Btn variant="primary" full icon="compass">Acción primaria</Btn>
+            <Btn variant="secondary" full icon="plus">Acción secundaria</Btn>
+            <Btn variant="outline" full>Acción terciaria</Btn>
+            <Btn variant="ghost" full>Ghost</Btn>
+          </div>
+        </Section>
+
+        {/* Tags */}
+        <Section title="Tags y badges" hint="Píldoras de estado, beneficios y verificación.">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            <Tag kind="secondary">Popular</Tag>
+            <Tag kind="secondary">Nuevo</Tag>
+            <Tag kind="secondary">Recomendado</Tag>
+            <Tag kind="accent" icon="gift">−15% café</Tag>
+            <Tag kind="softG" icon="check">Activo</Tag>
+            <Tag kind="soft" icon="lock">Privada</Tag>
+            <Tag kind="primary" icon="verify">Certificado</Tag>
+            <ProofOfVisit />
+          </div>
+        </Section>
+
+        {/* FamaScore */}
+        <Section title="FamaScore" hint="Sistema de reputación. Variante classic en cards y detalle.">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 14, borderRadius: 12, background: SPOTA.c.surface, border: `1px solid ${SPOTA.c.lineSoft}` }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontFamily: SPOTA.font.ui, fontSize: 12, color: SPOTA.c.textSoft }}>Tamaño base</span>
+              <FamaScore score={4.8} count={312} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontFamily: SPOTA.font.ui, fontSize: 12, color: SPOTA.c.textSoft }}>Tamaño grande</span>
+              <FamaScore score={4.8} count={312} size="lg" />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', borderRadius: 8, background: SPOTA.c.text }}>
+              <span style={{ fontFamily: SPOTA.font.ui, fontSize: 12, color: 'rgba(255,255,255,0.85)' }}>Sobre fondo oscuro</span>
+              <FamaScore score={4.8} count={312} onDark />
+            </div>
+          </div>
+        </Section>
+
+        {/* PlaceCard preview */}
+        <Section title="PlaceCard" hint="Card de lugar usada en Discover y Detalle de colección.">
+          <PlaceCard place={PLACES[0]} density="cozy" famaVariant="classic" saved={true} onSave={() => {}} onClick={() => {}} />
+        </Section>
+
+        {/* Avatar */}
+        <Section title="Avatar" hint="Con y sin Fama Score. Bordeado dorado cuando hay puntaje.">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 14, borderRadius: 12, background: SPOTA.c.surface, border: `1px solid ${SPOTA.c.lineSoft}` }}>
+            <Avatar name="Sol Benítez" size={32} />
+            <Avatar name="Tomás Romero" size={44} score="87" />
+            <Avatar name="Federico Mella" size={56} score="92" badge />
+            <Avatar name="Camila V." size={64} score="95" />
+          </div>
+        </Section>
+
+        {/* Iconos */}
+        <Section title="Iconografía" hint="SVG lineales 24px, stroke 1.75. Tinte primario o textSoft según contexto.">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 8, padding: 14, borderRadius: 12, background: SPOTA.c.surface, border: `1px solid ${SPOTA.c.lineSoft}` }}>
+            {sampleIcons.map(n => (
+              <div key={n} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                <Icon name={n} size={22} color={SPOTA.c.primary} />
+                <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: 9.5, color: SPOTA.c.textMuted, textAlign: 'center' }}>{n}</span>
+              </div>
+            ))}
+          </div>
+        </Section>
+
+        {/* Decisiones */}
+        <Section title="Decisiones de diseño" hint="Las decisiones D1 a D12 viven en CLAUDE.md y entrega/justificacion-diseno.md.">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {[
+              { d: 'D1', t: 'Niveles del Fama: Nuevo · Conocido · Habitué · Referente · Maestro' },
+              { d: 'D2', t: 'Iconografía SVG en Preferences y Nueva colección, no emojis nativos' },
+              { d: 'D3', t: 'Asimetría Host (en perfil) vs Negocio (entry separado)' },
+              { d: 'D8', t: 'Sub-máquina del CTA en detalle de lugar (Proof of Visit)' },
+              { d: 'D9', t: 'Wizard publicar de 3 pasos, validación implícita' },
+              { d: 'D10', t: 'Sub-máquina del host en plan grupal (todo o nada)' },
+            ].map(o => (
+              <div key={o.d} style={{ display: 'flex', gap: 10, padding: 10, borderRadius: 10, background: SPOTA.c.surface, border: `1px solid ${SPOTA.c.lineSoft}` }}>
+                <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: 11, fontWeight: 700, color: SPOTA.c.secondary, flexShrink: 0, width: 28 }}>{o.d}</span>
+                <span style={{ fontFamily: SPOTA.font.ui, fontSize: 12.5, color: SPOTA.c.text, lineHeight: 1.4 }}>{o.t}</span>
+              </div>
+            ))}
+          </div>
+        </Section>
+      </div>
+    </div>
+  );
+};
+
+Object.assign(window, { ScreenSplash, ScreenRecover, ScreenSearchResults, ScreenCollectionDetail, ScreenProfile, ScreenDesignSystem });
 
 // Aliases para que el SCREENS map encuentre todos los componentes
 window.ScreenHome = window.ScreenDiscover;
@@ -4072,9 +4236,10 @@ const SCREENS = [
   { id: 'bizCampaign',      cu: 'CU-22',   title: 'Campaña publicitaria',      group: 'Negocios',       comp: 'ScreenBizCampaign' },
   { id: 'bizInsights',      cu: 'CU-23',   title: 'Insights de zona',          group: 'Negocios',       comp: 'ScreenBizInsights' },
   { id: 'profile',          cu: '—',       title: 'Perfil',                    group: 'Otros',          comp: 'ScreenProfile' },
+  { id: 'uikit',            cu: '—',       title: 'UI Kit · Design System',    group: 'Referencia',     comp: 'ScreenDesignSystem' },
 ];
 
-const GROUP_ORDER = ['Onboarding', 'Descubrimiento', 'Experiencias', 'Colecciones', 'Planificación', 'Hosts', 'Negocios', 'Otros'];
+const GROUP_ORDER = ['Onboarding', 'Descubrimiento', 'Experiencias', 'Colecciones', 'Planificación', 'Hosts', 'Negocios', 'Otros', 'Referencia'];
 const GROUP_ICONS = {
   'Onboarding':     'user',
   'Descubrimiento': 'sparkles',
@@ -4084,6 +4249,7 @@ const GROUP_ICONS = {
   'Hosts':          'briefcase',
   'Negocios':       'megaphone',
   'Otros':          'more',
+  'Referencia':     'sparkles',
 };
 
 // ===== Tab bar con FAB central (CU-07 entry) =====
