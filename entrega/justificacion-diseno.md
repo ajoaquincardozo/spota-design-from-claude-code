@@ -185,7 +185,7 @@ Las decisiones que siguen no estaban en el brief original y se tomaron durante l
 
 1. **Niveles del Fama Score: Nuevo · Conocido · Habitué · Referente · Maestro.** El brief no definía un sistema de niveles. La progresión elegida usa léxico cotidiano del barrio porteño y evita términos del lenguaje SaaS ("Pro", "Premium") que contradicen la orientación de marca.
 
-2. **Iconografía de Preferences: SVG lineales con tinte terracota.** Reemplaza los emojis nativos del sistema operativo, que rompen consistencia visual entre dispositivos y tienen estilo "fluffy 3D" incompatible con la interfaz plana. Los íconos se integran al Icon system existente del prototipo.
+2. **Iconografía de Preferences y Nueva colección: SVG lineales con tinte terracota.** Reemplaza los emojis nativos del sistema operativo, que rompen consistencia visual entre dispositivos y tienen estilo "fluffy 3D" incompatible con la interfaz plana. Los íconos se integran al Icon system existente del prototipo y se aplican al onboarding de preferencias y al picker de tema de las Colecciones.
 
 3. **Asimetría Host/Negocio en la arquitectura.** Detallado en la sección de Justificación de la navegación. El entry point de Negocio se eliminó del perfil del usuario y queda accesible solamente desde el splash y el toggle Usuario/Negocio del login.
 
@@ -194,3 +194,54 @@ Las decisiones que siguen no estaban en el brief original y se tomaron durante l
 5. **Mapa funcional del Discover.** Estilizado tipo plano de Palermo con avenidas principales, calles secundarias, manzanas, dos espacios verdes (Bosques y plaza), río al sur, etiquetas de barrio, pin de "tu ubicación" con animación de pulso, filtros flotantes superiores, controles laterales de zoom y mi-ubicación, y botón "Buscar en esta zona". La estilización refuerza el carácter local del producto sin requerir integración con un proveedor de mapas en esta fase.
 
 6. **Arquitectura técnica del prototipo: HTML autocontenido.** El prototipo vive en un único archivo `Spota Prototipo.html` que carga React y Babel desde CDN y compila JSX en el browser. Los archivos `.jsx` sueltos del directorio `template/` reflejan un estado anterior y no se cargan en runtime; se conservan como respaldo histórico.
+
+7. **Diagrama de estados del CTA en el detalle de lugar.** El brief no especificaba qué acción primaria mostrar en cada momento del ciclo de vida de una visita. La primera versión del prototipo mostraba siempre "Marcar como visitado", lo que generaba contradicción cuando el lugar ya tenía el badge Visitado activo. Para resolverlo, se modeló el ciclo de la interacción del usuario con un lugar como una máquina de estados de cuatro estados visibles, alineada al mecanismo de Proof of Visit definido en `docs/Proof_of_Visit_Mecanismo_y_Flujo_de_Experiencia.md`.
+
+   ```
+                            ┌─────────────────────────────────┐
+                            │           DISPONIBLE             │
+                            │   CTA: [Quiero ir]              │◄──── estado inicial
+                            └────────────┬────────────────────┘
+                                         │
+                               tap "Quiero ir"
+                                         │
+                                         ▼
+                            ┌─────────────────────────────────┐
+                            │       INTENCIÓN DECLARADA        │
+                            │   CTA: [En camino · cancelar]   │
+                            │   (ventana de validación abierta)│
+                            └──────┬──────────────────┬───────┘
+                                   │                  │
+                     GPS dentro    │                  │  ventana cerró
+                     del radio     │                  │  sin validar
+                                   ▼                  ▼
+                     ┌──────────────────────┐   ┌──────────────────────┐
+                     │      VISITADO         │   │   NO VERIFICADO      │
+                     │  Badge: Visitado     │   │  Sin badge           │
+                     │  CTA: [Publicar      │   │  CTA: [Quiero ir]    │
+                     │   experiencia]       │   │  o publicar sin      │
+                     │                      │   │  verificar (fallback)│
+                     └──────────┬───────────┘   └──────────────────────┘
+                                │
+                          publica reseña
+                                │
+                                ▼
+                     ┌──────────────────────┐
+                     │      PUBLICADO        │
+                     │  Badge: Visitado     │
+                     │  Chip: Reseñado      │
+                     │  CTA: [Ver tu reseña]│
+                     └──────────────────────┘
+   ```
+
+   El estado **Intención declarada** introduce un comportamiento explícito de la plataforma: una vez que el usuario tocó "Quiero ir", aparece un aviso visible ("Te esperamos hasta las 21:30") que comunica la ventana de validación. Esto refuerza la confianza del usuario en el sistema antes de que la verificación ocurra. La acción "Guardar" (favoritos) es ortogonal y permanece disponible en cualquier estado.
+
+8. **Wizard de publicación de experiencia: tres pasos en lugar de cuatro.** La primera versión del wizard incluía un paso intermedio de validación de presencia por GPS al momento de publicar. Esta forma del flujo es incompatible con el mecanismo de Proof of Visit, que valida la visita en silencio dentro de una ventana temporal abierta cuando el usuario tocó "Quiero ir" en el descubrimiento. Si la validación ya se resolvió antes, repetirla en el momento de publicar es redundante; si no se resolvió, no tiene sentido pedirla cuando el usuario está en su casa horas después.
+
+   El wizard reorganizado tiene tres pasos:
+
+   - **Paso 1 — ¿Qué visita querés contar?** Lista filtrada exclusivamente a las visitas con Proof of Visit ya validado y aún no reseñadas. No hay entrada manual de lugar. Si el usuario no tiene visitas pendientes, se muestra un empty state que lo redirige a Descubrir para declarar una intención.
+   - **Paso 2 — ¿Cómo lo viviste?** Valoración con estrellas, reseña en texto libre y chips de etiquetas sugeridas que el usuario puede sumar al cuerpo del comentario.
+   - **Paso 3 — ¿Quién la puede ver?** Visibilidad pública o privada y, si la experiencia involucró a un host contratado, calificación del servicio.
+
+   El paso eliminado era de tipo "loading visual" sin valor funcional. Su remoción reduce el costo cognitivo del flujo de publicación y elimina la incongruencia entre la promesa del modelo (validación silenciosa en background) y la implementación inicial (validación interactiva en línea).

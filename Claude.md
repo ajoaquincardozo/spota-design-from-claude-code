@@ -244,11 +244,13 @@ Decisiones tomadas durante el prototipado que no estaban en el brief original. S
 | # | Decisión | Detalle en doc de entrega |
 |---|---|---|
 | D1 | **Niveles del Fama Score:** Nuevo · Conocido · Habitué · Referente · Maestro. Léxico barrial coherente con la marca; descarta "Pro" / "Premium" por sabor SaaS. | Apéndice §1 |
-| D2 | **Iconografía de Preferences:** SVG lineales del Icon system con tinte terracota, no emojis nativos del OS. | Apéndice §2 |
+| D2 | **Iconografía de Preferences y Nueva colección:** SVG lineales del Icon system con tinte terracota, no emojis nativos del OS. Aplica al onboarding de preferencias y al picker de tema de Colecciones. | Apéndice §2 |
 | D3 | **Asimetría Host/Negocio:** entry de Negocio fuera del perfil del usuario; Host adentro porque es evolución del rol. Negocio entra solo desde splash y toggle Usuario/Negocio del login. | §3 + Apéndice §3 |
 | D4 | **Layout full-bleed Welcome/Login/Register/Recover:** contenido vertical-centrado con CTA fijo abajo. Refuerza la calidez del onboarding. | Apéndice §4 |
 | D5 | **Mapa funcional Discover:** estilo plano de Palermo con avenidas, manzanas, parques (Bosques + plaza), río, etiquetas de barrio, pin "tu ubicación" con pulso, filtros flotantes (Todos / Abre ahora / Visitados / Guardados), zoom + mi-ubicación, "Buscar en esta zona". | Apéndice §5 |
 | D6 | **Arquitectura técnica del prototipo:** un único HTML autocontenido con React + Babel CDN. Los `.jsx` sueltos del `template/` no se cargan. | Apéndice §6 |
 | D7 | **Routing IDs alineados a SCREENS array:** `nav('home')` para Discover (no `'discover'`), todas las pantallas registradas en SCREENS para evitar fallback silencioso a Splash. | Sección de navegación |
+| D8 | **Diagrama de estados del CTA en detalle de lugar:** Disponible → Intención declarada → Visitado → Publicado, con rama de "no verificado" si la ventana de Proof of Visit cierra sin GPS dentro del radio. Reemplaza el contradictorio "Marcar como visitado". Espejo del modelo definido en `docs/Proof_of_Visit_Mecanismo_y_Flujo_de_Experiencia.md`. | Apéndice §7 |
+| D9 | **Wizard publicar de 3 pasos (no 4):** se elimina el paso de "validando presencia por GPS" porque el Proof of Visit ya se resolvió en background. Paso 1 ahora lista solamente visitas validadas pendientes de reseñar; pasos 2 y 3 son valoración + reseña + chips y visibilidad + rating de host. | Apéndice §8 |
 
 Cuando se tome una nueva decisión que afecte la marca, la navegación o la jerarquía visual: se suma una fila acá con el resumen y se profundiza la justificación en el doc de entrega.
