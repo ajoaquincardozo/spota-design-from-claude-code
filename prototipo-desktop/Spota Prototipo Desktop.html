@@ -147,7 +147,101 @@ const OFFERS = [
   { id: 'of3', title: 'Brunch para una primera cita', user: 'Mica L.', date: 'Dom 18 mayo', people: 2, hood: 'Villa Crespo', budget: 6500, postulants: 2 },
 ];
 
-Object.assign(window, { PLACES, CATEGORIES, REVIEWS, COLLECTIONS, PLAN_OPTIONS, HOSTS, OFFERS });
+// ─────────────────────────────────────────────────────────────
+// Concierge — datos y helpers compartidos con mobile
+// (interpretación de query, etiqueta de afinidad, reviewers afines).
+// Si más adelante se consolida un design-system.js común, este bloque
+// se extrae junto con SearchBar / IntentChips / AffineRow.
+// ─────────────────────────────────────────────────────────────
+const SEARCH_PLACEHOLDERS = [
+  'algo tranquilo en Palermo...',
+  'cena romántica el sábado...',
+  'café para trabajar con buen wifi...',
+  'plan económico con amigos...',
+  'qué hacer un domingo lluvioso...',
+  'after office en San Telmo...',
+];
+
+const AFFINE_REVIEWERS = {
+  p1:  ['Mati R.', 'Lu G.', 'Tomás S.'],
+  p2:  ['Sofía M.', 'Lu G.'],
+  p3:  ['Cami P.', 'Mati R.', 'Andrés L.'],
+  p6:  ['Tomás S.', 'Sofía M.'],
+  p7:  ['Lu G.', 'Cami P.'],
+  p8:  ['Andrés L.'],
+  p10: ['Sofía M.', 'Mati R.'],
+  p11: ['Cami P.', 'Tomás S.', 'Andrés L.'],
+};
+
+function affinityLabel(score) {
+  if (score == null) return null;
+  if (score >= 88) return { label: 'Alto match', tone: 'primary' };
+  if (score >= 78) return { label: 'Buen match', tone: 'soft'    };
+  return null;
+}
+
+function interpretQuery(text) {
+  if (!text) return {};
+  const t = text.toLowerCase();
+  const out = {};
+
+  const ambiente = [
+    { kw: ['tranquilo', 'tranqui', 'relajado', 'silencioso', 'tranquila'], v: 'tranquilo' },
+    { kw: ['romántico', 'romántica', 'romantico', 'romantica', 'íntimo', 'intimo'], v: 'romántico' },
+    { kw: ['movido', 'fiesta', 'after', 'after office', 'ruidoso'],     v: 'movido' },
+    { kw: ['charlar', 'conversar'],                                       v: 'charlar' },
+    { kw: ['trabajar', 'wifi', 'laburar', 'remoto'],                      v: 'trabajar' },
+    { kw: ['económico', 'economico', 'barato', 'low cost'],               v: 'económico' },
+  ];
+  for (const a of ambiente) if (a.kw.some(k => t.includes(k))) { out.ambiente = a.v; break; }
+
+  // compañía — el plural va antes del singular para que "amigos" no matchee "amigo"
+  const compania = [
+    { kw: ['con amigas'],                              v: 'con amigas' },
+    { kw: ['con una amiga', 'con amiga', 'una amiga'], v: 'con amiga'  },
+    { kw: ['con amigos'],                              v: 'con amigos' },
+    { kw: ['con un amigo', 'con amigo', 'un amigo'],   v: 'con amigo'  },
+    { kw: ['en pareja', 'mi pareja', 'cita'],          v: 'pareja'     },
+    { kw: ['en familia', 'con mi familia'],            v: 'familia'    },
+    { kw: ['en grupo', 'grupo'],                       v: 'grupo'      },
+    { kw: ['solo', 'sola'],                            v: 'solo'       },
+  ];
+  for (const c of compania) if (c.kw.some(k => t.includes(k))) { out.compania = c.v; break; }
+
+  const momento = [
+    { kw: ['hoy'],                          v: 'hoy'      },
+    { kw: ['mañana', 'manana'],             v: 'mañana'   },
+    { kw: ['esta noche', 'a la noche'],     v: 'esta noche' },
+    { kw: ['esta tarde', 'a la tarde'],     v: 'esta tarde' },
+    { kw: ['lunes'],   v: 'lunes'   },
+    { kw: ['martes'],  v: 'martes'  },
+    { kw: ['miércoles', 'miercoles'], v: 'miércoles' },
+    { kw: ['jueves'],  v: 'jueves'  },
+    { kw: ['viernes'], v: 'viernes' },
+    { kw: ['sábado', 'sabado'], v: 'sábado' },
+    { kw: ['domingo'], v: 'domingo' },
+    { kw: ['fin de semana', 'finde'], v: 'fin de semana' },
+  ];
+  for (const m of momento) if (m.kw.some(k => t.includes(k))) { out.momento = m.v; break; }
+
+  const categoria = [
+    { kw: ['café', 'cafe', 'cafés', 'cafes', 'cafetería', 'cafeteria'], v: 'cafés' },
+    { kw: ['cena', 'cenar', 'comer', 'restaurante', 'comida'],          v: 'comida' },
+    { kw: ['bar', 'bares', 'tragos', 'cerveza', 'cervecería'],          v: 'bares' },
+    { kw: ['cultura', 'museo', 'librería', 'libreria', 'cine', 'arte'], v: 'cultura' },
+    { kw: ['parque', 'aire libre', 'caminar', 'paseo'],                 v: 'aire libre' },
+  ];
+  for (const c of categoria) if (c.kw.some(k => t.includes(k))) { out.categoria = c.v; break; }
+
+  const zonas = ['Palermo', 'San Telmo', 'Villa Crespo', 'Colegiales', 'Recoleta',
+                 'Caballito', 'Chacarita', 'Boedo', 'Centro', 'Belgrano'];
+  for (const z of zonas) if (t.includes(z.toLowerCase())) { out.zona = z; break; }
+
+  return out;
+}
+
+Object.assign(window, { PLACES, CATEGORIES, REVIEWS, COLLECTIONS, PLAN_OPTIONS, HOSTS, OFFERS,
+                        SEARCH_PLACEHOLDERS, AFFINE_REVIEWERS, affinityLabel, interpretQuery });
 </script>
 
 <!-- components.jsx -->
@@ -370,12 +464,92 @@ const PlaceCard = ({ place, onClick, saved, onSave, selected }) => {
           {place.cat} · {place.hood}
         </p>
         <FamaScore score={place.score} count={place.reviews} />
+        <AffineRow place={place} />
       </div>
     </div>
   );
 };
 
-Object.assign(window, { Icon, SpotaLogo, Btn, Avatar, Tag, ProofOfVisit, FamaScore, PlaceCard });
+// AffineRow — chip cualitativo de match + mini-avatares de reseñadores afines.
+// Es la traducción humana del Fama Score predictivo. Espejo del componente mobile.
+const AffineRow = ({ place }) => {
+  const reviewers = (window.AFFINE_REVIEWERS && window.AFFINE_REVIEWERS[place.id]) || [];
+  const aff = window.affinityLabel ? window.affinityLabel(place.affinity) : null;
+  if (!aff && !reviewers.length) return null;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+      {aff && (
+        <span style={{
+          display: 'inline-flex', alignItems: 'center', gap: 4,
+          padding: '3px 8px', borderRadius: 999,
+          background: aff.tone === 'primary' ? 'rgba(47, 111, 94, 0.10)' : SPOTA.c.bgAlt,
+          border: `1px solid ${aff.tone === 'primary' ? 'rgba(47, 111, 94, 0.25)' : SPOTA.c.lineSoft}`,
+          fontFamily: SPOTA.font.ui, fontSize: 11, fontWeight: 600,
+          color: aff.tone === 'primary' ? SPOTA.c.primary : SPOTA.c.textSoft,
+        }}>
+          <Icon name="sparkles" size={10} color={aff.tone === 'primary' ? SPOTA.c.primary : SPOTA.c.textSoft} />
+          {aff.label}
+        </span>
+      )}
+      {reviewers.length > 0 && (
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ display: 'inline-flex' }}>
+            {reviewers.slice(0, 3).map((name, i) => (
+              <div key={name} style={{ marginLeft: i === 0 ? 0 : -7, border: `2px solid ${SPOTA.c.surface}`, borderRadius: 999, lineHeight: 0 }}>
+                <img src={avatar(name, 36)} alt={name} style={{ width: 18, height: 18, borderRadius: 999, display: 'block' }} />
+              </div>
+            ))}
+          </div>
+          <span style={{ fontFamily: SPOTA.font.ui, fontSize: 11.5, color: SPOTA.c.textSoft }}>
+            <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic' }}>gente como vos</span>
+          </span>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// IntentChips — visualiza las dimensiones interpretadas por interpretQuery.
+const INTENT_DIMENSIONS = [
+  { key: 'ambiente',  prefix: 'ambiente', icon: 'sparkles' },
+  { key: 'compania',  prefix: 'con',      icon: 'users'    },
+  { key: 'momento',   prefix: 'cuándo',   icon: 'calendar' },
+  { key: 'categoria', prefix: 'tipo',     icon: 'compass'  },
+  { key: 'zona',      prefix: 'en',       icon: 'map'      },
+];
+
+const IntentChips = ({ intents, label = 'Entendí esto:' }) => {
+  const present = INTENT_DIMENSIONS.filter(d => intents && intents[d.key]);
+  if (!present.length) return null;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+      <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', fontSize: 13, color: SPOTA.c.textSoft }}>
+        {label}
+      </span>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {present.map(d => (
+          <span key={d.key} style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            padding: '6px 12px', borderRadius: 999,
+            background: SPOTA.c.surface, border: `1px solid ${SPOTA.c.line}`,
+            fontFamily: SPOTA.font.ui, fontSize: 13,
+          }}>
+            <Icon name={d.icon} size={12} color={SPOTA.c.primary} />
+            <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', color: SPOTA.c.textSoft }}>
+              {d.prefix}
+            </span>
+            <strong style={{ fontWeight: 600, color: SPOTA.c.text }}>
+              {intents[d.key]}
+            </strong>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+Object.assign(window, { Icon, SpotaLogo, Btn, Avatar, Tag, ProofOfVisit, FamaScore, PlaceCard,
+                        AffineRow, IntentChips, INTENT_DIMENSIONS });
 </script>
 
 <!-- desktop-shell.jsx -->
@@ -425,6 +599,13 @@ const NavIconBtn = ({ children, onClick, title, active = false, prominent = fals
 
 const TopNav = ({ current, nav }) => {
   const [searchFocused, setSearchFocused] = React.useState(false);
+  const [navQuery, setNavQuery] = React.useState('');
+  const submitNavSearch = () => {
+    const q = (navQuery || '').trim();
+    if (!q) return;
+    nav('searchResults', { query: q });
+    setNavQuery('');
+  };
   return (
     <header style={{
       position: 'sticky', top: 0, zIndex: 50,
@@ -474,7 +655,10 @@ const TopNav = ({ current, nav }) => {
             <Icon name="search" size={17} color={SPOTA.c.textSoft} />
             <input
               type="text"
-              placeholder="Buscar lugares, colecciones, hosts..."
+              placeholder="Decile lo que buscás… ej: café para trabajar"
+              value={navQuery}
+              onChange={(e) => setNavQuery(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') submitNavSearch(); }}
               onFocus={() => setSearchFocused(true)}
               onBlur={() => setSearchFocused(false)}
               style={{
@@ -486,7 +670,7 @@ const TopNav = ({ current, nav }) => {
               fontFamily: SPOTA.font.ui, fontSize: 11, fontWeight: 600, color: SPOTA.c.textMuted,
               padding: '2px 6px', borderRadius: 4, border: `1px solid ${SPOTA.c.line}`,
               background: SPOTA.c.bgAlt,
-            }}>/</kbd>
+            }}>↵</kbd>
           </div>
         </div>
 
@@ -784,80 +968,273 @@ const MapView = ({ selected, onSelect }) => {
   );
 };
 
+// Discover desktop — concierge-first.
+// El home no muestra recomendaciones por default. El input es el bloque visual
+// dominante; los atajos por categoría y los ejemplos clicables son apoyos
+// discretos. Las recomendaciones aparecen recién en SearchResults.
 const ScreenDiscover = ({ nav }) => {
-  const [cat, setCat] = React.useState(null);
-  const [saved, setSaved] = React.useState(['p1']);
-  const [selectedPin, setSelectedPin] = React.useState('p1');
-  const toggleSave = (id) => setSaved(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
+  const [query, setQuery] = React.useState('');
+
+  const goSearch = (q) => {
+    const text = (q || '').trim();
+    if (!text) return;
+    nav('searchResults', { query: text });
+  };
+
+  // Atajos: cada chip dispara una búsqueda con su nombre como query.
+  const SHORTCUTS = [
+    { q: 'cafés',      label: 'Cafés',      icon: 'coffee'   },
+    { q: 'comida',     label: 'Comida',     icon: 'utensils' },
+    { q: 'bares',      label: 'Bares',      icon: 'bar'      },
+    { q: 'cultura',    label: 'Cultura',    icon: 'palette'  },
+    { q: 'aire libre', label: 'Aire libre', icon: 'leaf'     },
+  ];
+
+  const EXAMPLES = [
+    'café para trabajar con buen wifi',
+    'algo tranquilo en Palermo con una amiga',
+    'cena romántica el sábado',
+  ];
+
+  // Placeholder rotativo para reforzar la idea del concierge.
+  const [phIdx, setPhIdx] = React.useState(0);
+  React.useEffect(() => {
+    const t = setInterval(() => setPhIdx(i => (i + 1) % SEARCH_PLACEHOLDERS.length), 3200);
+    return () => clearInterval(t);
+  }, []);
+  const ph = SEARCH_PLACEHOLDERS[phIdx];
 
   return (
-    <section>
-      {/* Header con saludo + intro */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 20, gap: 16 }}>
-        <div>
+    <section style={{ paddingTop: 32 }}>
+      <div style={{ maxWidth: 760, margin: '0 auto' }}>
+        {/* Saludo */}
+        <div style={{ marginBottom: 22 }}>
           <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 14, color: SPOTA.c.textSoft }}>Hola Sol 👋</p>
-          <h1 style={{ margin: '4px 0 0', fontFamily: SPOTA.font.ui, fontSize: 32, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.6 }}>
+          <h1 style={{ margin: '4px 0 0', fontFamily: SPOTA.font.ui, fontSize: 30, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.5, lineHeight: 1.2 }}>
             ¿Qué hacemos <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', color: SPOTA.c.secondary, fontWeight: 400 }}>hoy</span>?
           </h1>
         </div>
-        <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 14, color: SPOTA.c.textSoft }}>
-          <strong style={{ color: SPOTA.c.text }}>{PLACES.length} lugares</strong> alineados a tu perfil
-        </p>
-      </div>
 
-      {/* Chips de categorías */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
-        <button onClick={() => setCat(null)} style={{
-          display: 'inline-flex', alignItems: 'center', gap: 7,
-          padding: '10px 16px', borderRadius: 999, cursor: 'pointer',
-          background: cat === null ? SPOTA.c.primary : SPOTA.c.surface,
-          color: cat === null ? '#fff' : SPOTA.c.text,
-          border: `1.5px solid ${cat === null ? SPOTA.c.primary : SPOTA.c.line}`,
-          fontFamily: SPOTA.font.ui, fontWeight: 600, fontSize: 14,
+        {/* Input HERO */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 14,
+          padding: '0 22px', height: 72,
+          background: '#FFFFFF', borderRadius: 999,
+          border: `1.5px solid ${SPOTA.c.primary}`,
+          boxShadow: '0 10px 28px rgba(47, 111, 94, 0.14), 0 1px 3px rgba(47, 111, 94, 0.08)',
+          marginBottom: 22,
         }}>
-          <Icon name="sparkles" size={15} color={cat === null ? '#fff' : SPOTA.c.primary} /> Para vos
-        </button>
-        {CATEGORIES.map(c => {
-          const on = cat === c.id;
-          return (
-            <button key={c.id} onClick={() => setCat(c.id)} style={{
-              display: 'inline-flex', alignItems: 'center', gap: 7,
-              padding: '10px 16px', borderRadius: 999, cursor: 'pointer',
-              background: on ? SPOTA.c.primary : SPOTA.c.surface,
-              color: on ? '#fff' : SPOTA.c.text,
-              border: `1.5px solid ${on ? SPOTA.c.primary : SPOTA.c.line}`,
-              fontFamily: SPOTA.font.ui, fontWeight: 600, fontSize: 14,
+          <Icon name="search" size={22} color={SPOTA.c.primary} strokeWidth={2.2} />
+          <div style={{ flex: 1, position: 'relative', height: 26, display: 'flex', alignItems: 'center' }}>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') goSearch(query); }}
+              placeholder=""
+              style={{
+                position: 'absolute', inset: 0, width: '100%',
+                border: 'none', outline: 'none', background: 'transparent',
+                fontFamily: SPOTA.font.ui, fontSize: 17, color: SPOTA.c.text,
+              }}
+            />
+            {!query && (
+              <span style={{
+                pointerEvents: 'none',
+                fontFamily: SPOTA.font.ui, fontSize: 17, color: SPOTA.c.textSoft,
+              }}>
+                {ph}
+              </span>
+            )}
+          </div>
+          {query && (
+            <button onClick={() => goSearch(query)} style={{
+              border: 'none', cursor: 'pointer',
+              background: SPOTA.c.primary, color: '#fff',
+              fontFamily: SPOTA.font.ui, fontSize: 13, fontWeight: 600,
+              padding: '10px 18px', borderRadius: 999,
+              display: 'inline-flex', alignItems: 'center', gap: 6,
             }}>
-              <Icon name={c.icon} size={15} color={on ? '#fff' : SPOTA.c.textSoft} /> {c.label}
+              Buscar <Icon name="arrowRight" size={14} color="#fff" />
             </button>
-          );
-        })}
-      </div>
+          )}
+        </div>
 
-      {/* Layout 2 columnas: lista + mapa */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: 24, alignItems: 'start' }}>
-        {/* Columna izquierda: lista en grid 2 cols */}
-        <div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
-            {PLACES.map(p => (
-              <PlaceCard key={p.id} place={p}
-                saved={saved.includes(p.id)} onSave={() => toggleSave(p.id)}
-                selected={selectedPin === p.id}
-                onClick={() => nav('placeDetail', { id: p.id })} />
+        {/* Atajos discretos */}
+        <div style={{ marginBottom: 28 }}>
+          <p style={{ margin: '0 0 10px', fontFamily: SPOTA.font.serif, fontStyle: 'italic', fontSize: 13, color: SPOTA.c.textSoft }}>
+            o elegí un atajo
+          </p>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {SHORTCUTS.map(s => (
+              <button key={s.q} onClick={() => goSearch(s.q)} style={{
+                display: 'inline-flex', alignItems: 'center', gap: 7,
+                padding: '8px 14px', borderRadius: 999,
+                background: 'transparent', border: `1px solid ${SPOTA.c.lineSoft}`,
+                cursor: 'pointer', fontFamily: SPOTA.font.ui, fontSize: 13, fontWeight: 500,
+                color: SPOTA.c.textSoft, transition: 'background 120ms, border-color 120ms, color 120ms',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = SPOTA.c.surface; e.currentTarget.style.borderColor = SPOTA.c.line; e.currentTarget.style.color = SPOTA.c.text; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = SPOTA.c.lineSoft; e.currentTarget.style.color = SPOTA.c.textSoft; }}
+              >
+                <Icon name={s.icon} size={13} color={SPOTA.c.textSoft} />
+                {s.label}
+              </button>
             ))}
           </div>
         </div>
 
-        {/* Columna derecha: mapa sticky */}
-        <div style={{ position: 'sticky', top: 96, height: 'calc(100vh - 120px)' }}>
-          <MapView selected={selectedPin} onSelect={setSelectedPin} />
+        {/* Ejemplos clicables — 3 columnas en desktop */}
+        <div>
+          <p style={{ margin: '0 0 12px', fontFamily: SPOTA.font.serif, fontStyle: 'italic', fontSize: 13, color: SPOTA.c.textSoft }}>
+            probá decirle
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+            {EXAMPLES.map(ex => (
+              <button key={ex} onClick={() => goSearch(ex)} style={{
+                display: 'flex', alignItems: 'flex-start', gap: 10,
+                padding: '14px 16px', borderRadius: 14,
+                background: SPOTA.c.surface, border: `1px solid ${SPOTA.c.lineSoft}`,
+                cursor: 'pointer', textAlign: 'left',
+                fontFamily: SPOTA.font.ui, fontSize: 14, color: SPOTA.c.text,
+                transition: 'border-color 150ms, transform 150ms, box-shadow 150ms',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = SPOTA.c.primary; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = SPOTA.shadow.card; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = SPOTA.c.lineSoft; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
+              >
+                <Icon name="sparkles" size={14} color={SPOTA.c.accent} />
+                <span style={{ flex: 1, lineHeight: 1.4 }}>"{ex}"</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </section>
   );
 };
 
-Object.assign(window, { ScreenDiscover });
+// SearchResults desktop — D12: lista (60%) + mapa (40%) simultáneos.
+// Header con input editable y refinable. Loading narrativo al entrar y al refinar.
+// Espejo conceptual del SearchResults mobile, adaptado al canvas desktop.
+const ScreenSearchResults = ({ nav, params }) => {
+  const initialQuery = (params && params.query) || 'algo tranquilo en Palermo con una amiga el sábado';
+  const [activeQuery, setActiveQuery] = React.useState(initialQuery);
+  const [draftQuery, setDraftQuery] = React.useState(initialQuery);
+  const [loading, setLoading] = React.useState(true);
+  const [selectedPin, setSelectedPin] = React.useState('p1');
+  const intents = window.interpretQuery(activeQuery);
+
+  React.useEffect(() => {
+    setLoading(true);
+    const t = setTimeout(() => setLoading(false), 750);
+    return () => clearTimeout(t);
+  }, [activeQuery]);
+
+  const submit = () => {
+    const q = (draftQuery || '').trim();
+    if (!q || q === activeQuery) return;
+    setActiveQuery(q);
+  };
+
+  return (
+    <section style={{ paddingTop: 8 }}>
+      {/* Header refinable */}
+      <div style={{ marginBottom: 18, display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button onClick={() => nav('home')} title="Volver" style={{
+          width: 40, height: 40, borderRadius: 999, border: `1px solid ${SPOTA.c.line}`,
+          background: SPOTA.c.surface, cursor: 'pointer',
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+        }}>
+          <Icon name="arrowLeft" size={18} color={SPOTA.c.text} />
+        </button>
+        <div style={{
+          flex: 1, display: 'flex', alignItems: 'center', gap: 12,
+          padding: '0 18px', height: 56,
+          background: '#FFFFFF', borderRadius: 999,
+          border: `1.5px solid ${SPOTA.c.primary}`,
+          boxShadow: '0 6px 18px rgba(47, 111, 94, 0.10)',
+        }}>
+          <Icon name="search" size={18} color={SPOTA.c.primary} />
+          <input
+            value={draftQuery}
+            onChange={(e) => setDraftQuery(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}
+            style={{
+              flex: 1, border: 'none', outline: 'none', background: 'transparent',
+              fontFamily: SPOTA.font.ui, fontSize: 15, color: SPOTA.c.text,
+            }}
+          />
+          {draftQuery && draftQuery !== activeQuery && (
+            <button onClick={submit} style={{
+              border: 'none', cursor: 'pointer',
+              background: SPOTA.c.primary, color: '#fff',
+              fontFamily: SPOTA.font.ui, fontSize: 12.5, fontWeight: 600,
+              padding: '7px 14px', borderRadius: 999,
+            }}>Refinar</button>
+          )}
+        </div>
+      </div>
+
+      {loading ? (
+        <ConciergeLoadingDesktop intents={intents} />
+      ) : (
+        <React.Fragment>
+          {/* Chips de intención + contador */}
+          <div style={{ marginBottom: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+            <IntentChips intents={intents} />
+            <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 13.5, color: SPOTA.c.textSoft }}>
+              <strong style={{ color: SPOTA.c.text }}>{PLACES.length} lugares</strong> por afinidad
+            </p>
+          </div>
+
+          {/* D12 — lista 60% + mapa 40% sticky */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: 24, alignItems: 'start' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+              {PLACES.map(p => (
+                <PlaceCard key={p.id} place={p}
+                  selected={selectedPin === p.id}
+                  onClick={() => nav('placeDetail', { id: p.id })} />
+              ))}
+            </div>
+            <div style={{ position: 'sticky', top: 96, height: 'calc(100vh - 120px)' }}>
+              <MapView selected={selectedPin} onSelect={setSelectedPin} />
+            </div>
+          </div>
+        </React.Fragment>
+      )}
+    </section>
+  );
+};
+
+// ConciergeLoadingDesktop — pausa narrativa entre submit y resultados.
+const ConciergeLoadingDesktop = ({ intents }) => {
+  const dims = Object.values(intents || {}).filter(Boolean);
+  return (
+    <div style={{
+      minHeight: 420,
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      padding: '60px 24px', gap: 18,
+    }}>
+      <div style={{ display: 'inline-flex', gap: 8 }}>
+        {[0, 1, 2].map(i => (
+          <span key={i} style={{
+            width: 10, height: 10, borderRadius: 999, background: SPOTA.c.primary,
+            opacity: 0.35, animation: `pulse 1.2s ease-in-out ${i * 0.15}s infinite`,
+          }} />
+        ))}
+      </div>
+      <p style={{ margin: 0, textAlign: 'center', fontFamily: SPOTA.font.ui, fontSize: 17, color: SPOTA.c.text }}>
+        <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic' }}>Leyendo</span> tus gustos…
+      </p>
+      {dims.length > 0 && (
+        <p style={{ margin: 0, textAlign: 'center', fontFamily: SPOTA.font.ui, fontSize: 13.5, color: SPOTA.c.textSoft, maxWidth: 420, lineHeight: 1.5 }}>
+          Cruzando {dims.join(' · ')} con tu Fama Score
+        </p>
+      )}
+    </div>
+  );
+};
+
+Object.assign(window, { ScreenDiscover, ScreenSearchResults });
 </script>
 
 <!-- screens-place-detail.jsx -->
@@ -3956,6 +4333,7 @@ const ScreenSoon = ({ current, nav }) => {
 
 const SCREENS = {
   home:             ScreenDiscover,
+  searchResults:    ScreenSearchResults,
   placeDetail:      ScreenPlaceDetail,
   collections:      ScreenCollections,
   collectionDetail: ScreenCollectionDetail,
@@ -3993,6 +4371,7 @@ const SCREENS = {
 
 // Mapping de pantalla a ítem del nav (para resaltar el tab activo cuando estás en una pantalla hija).
 const NAV_PARENT = {
+  searchResults: 'home',
   placeDetail: 'home',
   collectionDetail: 'collections',
   createCollection: 'collections',
