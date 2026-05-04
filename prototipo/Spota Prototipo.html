@@ -1196,7 +1196,7 @@ const ProofOfVisit = ({ size = 'sm', style = {} }) => {
 // ─────────────────────────────────────────────────────────────
 // Fama Score — 3 variantes (toggle por tweak)
 // ─────────────────────────────────────────────────────────────
-const FamaScore = ({ score = 4.7, count = 256, affinity = 92, variant = 'classic', size = 'sm' }) => {
+const FamaScore = ({ score = 4.7, count = 256, affinity = 92, variant = 'classic', size = 'sm', onDark = false }) => {
   if (variant === 'ring') {
     const r = size === 'lg' ? 22 : 14;
     const circ = 2 * Math.PI * r;
@@ -1244,10 +1244,10 @@ const FamaScore = ({ score = 4.7, count = 256, affinity = 92, variant = 'classic
   return (
     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
       <Icon name="star" size={size === 'lg' ? 18 : 14} color={SPOTA.c.accent} />
-      <span style={{ fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: size === 'lg' ? 15 : 13, color: SPOTA.c.text }}>
+      <span style={{ fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: size === 'lg' ? 15 : 13, color: onDark ? '#fff' : SPOTA.c.text }}>
         {score.toFixed(1)}
       </span>
-      <span style={{ fontFamily: SPOTA.font.ui, fontSize: size === 'lg' ? 14 : 12.5, color: SPOTA.c.textSoft }}>
+      <span style={{ fontFamily: SPOTA.font.ui, fontSize: size === 'lg' ? 14 : 12.5, color: onDark ? 'rgba(255,255,255,0.85)' : SPOTA.c.textSoft }}>
         ({count})
       </span>
     </div>
@@ -2003,7 +2003,7 @@ const ScreenDiscover = ({ nav, famaVariant, density: dens }) => {
                 Cafetería · Palermo · Abierto ahora
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, textShadow: '0 1px 2px rgba(0,0,0,0.45)' }}>
-                <FamaScore score={4.8} count={312} affinity={94} variant={famaVariant} />
+                <FamaScore score={4.8} count={312} affinity={94} variant={famaVariant} onDark />
                 <span style={{ fontFamily: SPOTA.font.ui, fontSize: 12, opacity: 0.95 }}>· $$ · −15% en café</span>
               </div>
             </div>
@@ -2027,22 +2027,6 @@ const ScreenDiscover = ({ nav, famaVariant, density: dens }) => {
                 saved={saved.includes(p.id)} onSave={() => toggleSave(p.id)}
                 onClick={() => nav('placeDetail', { id: p.id })} />
             ))}
-          </div>
-
-          {/* Marketplace teaser */}
-          <div onClick={() => nav('hostMarketplace')} style={{
-            background: `linear-gradient(135deg, ${SPOTA.c.primary} 0%, ${SPOTA.c.primaryDark} 100%)`,
-            borderRadius: 18, padding: 20, color: '#fff', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer',
-            marginBottom: 20,
-          }}>
-            <div style={{ width: 56, height: 56, borderRadius: 999, background: 'rgba(255,255,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Icon name="users" size={26} color="#fff" />
-            </div>
-            <div style={{ flex: 1 }}>
-              <h3 style={{ margin: '0 0 2px', fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 16 }}>Buscás algo único?</h3>
-              <p style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 13, opacity: 0.9 }}>Contratá un host local que arme tu salida ideal.</p>
-            </div>
-            <Icon name="arrowRight" size={20} color="#fff" />
           </div>
 
           <SectionTitle>Más para descubrir</SectionTitle>
@@ -2814,6 +2798,64 @@ Object.assign(window, { ScreenCreateCollection, ScreenCollections });
 <script type="text/babel" data-presets="react">
 // CU-12, CU-13, CU-14 — Planificación grupal
 
+// Sub-máquina del host dentro del plan grupal:
+//   sin → con (vía Marketplace, transición irreversible)
+//   variante post-evento agrega CTA "Calificar al host"
+const HostBlock = ({ state = 'sin', postEvent = false, onAdd, onRate }) => {
+  if (state === 'sin') {
+    return (
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        padding: '12px 14px', borderRadius: 14,
+        background: SPOTA.c.surface, border: `1px dashed ${SPOTA.c.line}`,
+      }}>
+        <div style={{ width: 38, height: 38, borderRadius: 999, background: SPOTA.c.bgAlt, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Icon name="users" size={18} color={SPOTA.c.textSoft} />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: SPOTA.font.ui, fontWeight: 600, fontSize: 13.5, color: SPOTA.c.text, lineHeight: 1.3 }}>¿Necesitan un host?</div>
+          <p style={{ margin: '2px 0 0', fontFamily: SPOTA.font.ui, fontSize: 12, color: SPOTA.c.textSoft, lineHeight: 1.4 }}>
+            Alguien que arme la experiencia y se ocupe de la logística.
+          </p>
+        </div>
+        <Btn variant="outline" size="sm" onClick={onAdd}>Sumar</Btn>
+      </div>
+    );
+  }
+  // state === 'con'
+  return (
+    <div style={{
+      padding: 14, borderRadius: 14,
+      background: SPOTA.c.surface, border: `1px solid ${SPOTA.c.lineSoft}`,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+        <Icon name="users" size={14} color={SPOTA.c.primary} />
+        <span style={{ fontFamily: SPOTA.font.ui, fontSize: 11.5, fontWeight: 700, color: SPOTA.c.primary, textTransform: 'uppercase', letterSpacing: 0.5 }}>Host del plan</span>
+      </div>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+        <Avatar name="Federico M." size={48} score="92" />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 14.5, color: SPOTA.c.text }}>Federico M. <span style={{ fontWeight: 500, color: SPOTA.c.textSoft, fontSize: 12 }}>· Fama 92</span></div>
+          <p style={{ margin: '2px 0 0', fontFamily: SPOTA.font.ui, fontSize: 12.5, color: SPOTA.c.textSoft, lineHeight: 1.4 }}>
+            Tour de cafés de especialidad por Palermo · 3 hs
+          </p>
+        </div>
+        <span style={{ fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 14, color: SPOTA.c.text, whiteSpace: 'nowrap' }}>$12.500</span>
+      </div>
+      {postEvent && (
+        <button onClick={onRate} style={{
+          marginTop: 12, width: '100%', padding: '8px 12px', borderRadius: 10,
+          background: SPOTA.c.accentSoft, border: 'none', cursor: 'pointer',
+          fontFamily: SPOTA.font.ui, fontWeight: 600, fontSize: 13, color: '#7A5A12',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+        }}>
+          <Icon name="star" size={14} color={SPOTA.c.accent} /> Calificar al host
+        </button>
+      )}
+    </div>
+  );
+};
+
 // CU-12: Crear plan grupal
 const ScreenCreatePlan = ({ nav }) => {
   const [step, setStep] = React.useState(1);
@@ -2895,6 +2937,9 @@ const ScreenCreatePlan = ({ nav }) => {
                   <Icon name="check" size={18} color={SPOTA.c.primary} strokeWidth={3} />
                 </div>
               ))}
+            </div>
+            <div style={{ marginTop: 18 }}>
+              <HostBlock state="sin" onAdd={() => nav('hostMarketplace')} />
             </div>
           </>
         )}
@@ -3003,6 +3048,10 @@ const ScreenPlanVote = ({ nav, params }) => {
         </div>
 
         <div style={{ marginTop: 14 }}>
+          <HostBlock state="sin" onAdd={() => nav('hostMarketplace')} />
+        </div>
+
+        <div style={{ marginTop: 14 }}>
           <Btn variant="secondary" full icon="check" onClick={() => nav('planClose')}>Cerrar votación (sos creadora)</Btn>
         </div>
       </div>
@@ -3041,7 +3090,7 @@ const ScreenPlanClose = ({ nav }) => {
             <Field label="Hora" value="20:30 hs" onChange={() => {}} icon="clock" />
           </div>
         </div>
-        <div style={{ background: SPOTA.c.surface, borderRadius: 14, padding: 14, marginBottom: 18, border: `1px solid ${SPOTA.c.lineSoft}` }}>
+        <div style={{ background: SPOTA.c.surface, borderRadius: 14, padding: 14, marginBottom: 14, border: `1px solid ${SPOTA.c.lineSoft}` }}>
           <h3 style={{ margin: '0 0 10px', fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 14, color: SPOTA.c.text }}>Confirman asistencia</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[{ n: 'Sol B.', s: 'Voy' }, { n: 'Tomás R.', s: 'Voy' }, { n: 'Mica L.', s: 'Voy' }, { n: 'Vos', s: 'Voy' }].map(p => (
@@ -3052,6 +3101,9 @@ const ScreenPlanClose = ({ nav }) => {
               </div>
             ))}
           </div>
+        </div>
+        <div style={{ marginBottom: 18 }}>
+          <HostBlock state="con" />
         </div>
         <Btn variant="primary" size="lg" full onClick={() => nav('plans')}>Confirmar y notificar al grupo</Btn>
       </div>

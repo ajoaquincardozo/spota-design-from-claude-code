@@ -245,3 +245,40 @@ Las decisiones que siguen no estaban en el brief original y se tomaron durante l
    - **Paso 3 — ¿Quién la puede ver?** Visibilidad pública o privada y, si la experiencia involucró a un host contratado, calificación del servicio.
 
    El paso eliminado era de tipo "loading visual" sin valor funcional. Su remoción reduce el costo cognitivo del flujo de publicación y elimina la incongruencia entre la promesa del modelo (validación silenciosa en background) y la implementación inicial (validación interactiva en línea).
+
+9. **Sub-máquina del host dentro del plan grupal y reubicación del Marketplace.** El brief original posicionaba el Marketplace de Hosts como una entrada secundaria accesible desde Discover y desde el perfil del usuario. Durante el prototipado se identificó que esa ubicación es prematura: contratar un host sin un plan que lo ancle es una decisión sin contexto, y un usuario que entra en frío al Marketplace cae en un formulario abierto que es el tipo de fricción que Spota busca eliminar. La solución elegida reubica el Marketplace como una capacidad **contextual del plan grupal**, accesible solo desde adentro del plan, y modela la decisión "hay host / no hay host" como una sub-máquina propia que evoluciona en paralelo al ciclo de vida principal del plan.
+
+   El plan grupal y la decisión sobre el host son dos máquinas de estado ortogonales:
+
+   ```
+   PLAN PRINCIPAL                            HOST DENTRO DEL PLAN (sub-máquina)
+
+      Borrador                                  Sin host
+         │                                      (default — sin etiqueta visible)
+         ▼                                          │
+      Votación abierta                              │  tap "Sumar" → Marketplace
+         │                                          │  contrata (irreversible)
+         ▼                                          ▼
+      Confirmado                                Con host
+         │                                      Card: avatar · Fama · propuesta
+         ▼                                          │
+      Ejecutado                                     │  post-evento
+                                                    ▼
+                                              Con host · post-evento
+                                              + CTA "Calificar al host"
+   ```
+
+   La sub-máquina del host es deliberadamente minimal. La regla "todo o nada, sin cancelaciones" elimina los estados intermedios "buscando", "pendiente" y "cancelado" que existían en el borrador inicial: la transición de *Sin host* a *Con host* es irreversible, lo que le da peso a la decisión y baja el ruido de "lo agrego, lo quito, lo vuelvo a agregar". El default es la ausencia, no una etiqueta — un plan sin host es simplemente un plan, y por eso el sub-estado *Sin host* no se rotula en la UI: aparece como una pregunta discreta ("¿Necesitan un host?") sin chip de "plan sin host".
+
+   **Tabla de visibilidad del bloque de host según estado del plan:**
+
+   | Estado del plan      | Sub-estado del host | Qué se muestra                                                   |
+   |----------------------|---------------------|------------------------------------------------------------------|
+   | Borrador / Votación / Confirmado | Sin host  | Acción secundaria discreta: *"¿Necesitan un host?"* + botón "Sumar" |
+   | Borrador / Votación / Confirmado | Con host  | Card del host visible (avatar, Fama, propuesta, precio)          |
+   | Ejecutado            | Sin host             | Nada — es solo un plan que pasó                                  |
+   | Ejecutado            | Con host             | Misma card + CTA "Calificar al host" (irreversible una vez calificado) |
+
+   El bloque "Host" vive como un slot fijo en la página del plan, visible en cualquier estado salvo *Ejecutado · Sin host*. La predictibilidad del lugar refuerza la lectura: el host es un atributo del plan, no un agregado de un momento. Solo el creador del plan opera la sub-máquina; los demás participantes ven el estado pero no actúan, decisión coherente con mantener una sola voz contractual frente al host.
+
+   La eliminación del teaser del Marketplace en Discover es la consecuencia operativa de esta decisión. El Marketplace no desaparece como pantalla — sigue existiendo y se entra a él desde el bloque "Sumar" del plan. Lo que cambia es su ubicación en la arquitectura de información: ya no es una capacidad de descubrimiento individual, sino una capacidad de coordinación grupal.

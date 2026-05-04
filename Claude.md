@@ -163,12 +163,12 @@ Los negocios reclaman su perfil, publican beneficios exclusivos, configuran camp
 2. **Colecciones** → CU-10, CU-11
 3. **Publicar** (acción central) → CU-07
 4. **Planes** → CU-12, CU-13, CU-14
-5. **Perfil** → CU-04, CU-05, CU-09 + acceso a Marketplace (CU-15, CU-16)
+5. **Perfil** → CU-04, CU-05, CU-09
 
 ### Accesos secundarios
-- **Marketplace de Hosts:** accesible desde perfil o desde descubrimiento
-- **Registrarse como Host:** desde menú de perfil, flujo diferenciado (es una evolución natural del rol del usuario — cualquier persona puede convertir su conocimiento local en servicio)
-- **Postularse a Oferta:** dashboard del host dentro de su perfil
+- **Marketplace de Hosts:** entrada **contextual desde el plan grupal** únicamente. Aparece como bloque "¿Necesitan un host?" en `ScreenCreatePlan` y `ScreenPlanVote` (sub-estado *Sin host*) y como card del host contratado en `ScreenPlanClose` (sub-estado *Con host*). No tiene entrada directa desde Discover ni desde el perfil del usuario, porque contratar un host sin un plan que lo ancle es decisión sin contexto.
+- **Registrarse como Host:** desde menú de perfil, flujo diferenciado (es una evolución natural del rol del usuario — cualquier persona puede convertir su conocimiento local en servicio).
+- **Postularse a Oferta:** dashboard del host dentro de su perfil.
 
 ### App de negocios (login separado)
 - Dashboard principal con accesos a: CU-19, CU-20, CU-21, CU-22, CU-23
@@ -252,5 +252,6 @@ Decisiones tomadas durante el prototipado que no estaban en el brief original. S
 | D7 | **Routing IDs alineados a SCREENS array:** `nav('home')` para Discover (no `'discover'`), todas las pantallas registradas en SCREENS para evitar fallback silencioso a Splash. | Sección de navegación |
 | D8 | **Diagrama de estados del CTA en detalle de lugar:** Disponible → Intención declarada → Visitado → Publicado, con rama de "no verificado" si la ventana de Proof of Visit cierra sin GPS dentro del radio. Reemplaza el contradictorio "Marcar como visitado". Espejo del modelo definido en `docs/Proof_of_Visit_Mecanismo_y_Flujo_de_Experiencia.md`. | Apéndice §7 |
 | D9 | **Wizard publicar de 3 pasos (no 4):** se elimina el paso de "validando presencia por GPS" porque el Proof of Visit ya se resolvió en background. Paso 1 ahora lista solamente visitas validadas pendientes de reseñar; pasos 2 y 3 son valoración + reseña + chips y visibilidad + rating de host. | Apéndice §8 |
+| D10 | **Sub-máquina del host dentro del plan grupal:** dos estados (*Sin host* — default sin etiqueta visible — y *Con host* — card visible con avatar/Fama/propuesta), transición irreversible (no hay cancelación). El bloque vive como slot persistente en `ScreenCreatePlan`, `ScreenPlanVote` y `ScreenPlanClose`. Reemplaza el teaser del Marketplace en Discover, que se elimina. Solo el creador del plan opera la sub-máquina. | Apéndice §9 |
 
 Cuando se tome una nueva decisión que afecte la marca, la navegación o la jerarquía visual: se suma una fila acá con el resumen y se profundiza la justificación en el doc de entrega.
