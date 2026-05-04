@@ -1,0 +1,9 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Material de cátedra / referencia (no parte del proyecto)
+docs/
+
+# Config local de Claude Code (sesión personal)
+.claude/
