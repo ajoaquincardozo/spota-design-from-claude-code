@@ -282,3 +282,25 @@ Las decisiones que siguen no estaban en el brief original y se tomaron durante l
    El bloque "Host" vive como un slot fijo en la página del plan, visible en cualquier estado salvo *Ejecutado · Sin host*. La predictibilidad del lugar refuerza la lectura: el host es un atributo del plan, no un agregado de un momento. Solo el creador del plan opera la sub-máquina; los demás participantes ven el estado pero no actúan, decisión coherente con mantener una sola voz contractual frente al host.
 
    La eliminación del teaser del Marketplace en Discover es la consecuencia operativa de esta decisión. El Marketplace no desaparece como pantalla — sigue existiendo y se entra a él desde el bloque "Sumar" del plan. Lo que cambia es su ubicación en la arquitectura de información: ya no es una capacidad de descubrimiento individual, sino una capacidad de coordinación grupal.
+
+10. **"Perfil" fuera del navbar desktop.** El TopNav del desktop incluía originalmente cuatro tabs: Descubrir, Colecciones, Planes, Perfil. Durante la revisión post-Fase 7 se identificó que el ítem "Perfil" duplicaba al avatar, que ya estaba en el extremo derecho del TopNav cumpliendo la misma función. La regla revisada: el avatar es la única entrada al área del perfil; los tres tabs restantes quedan enfocados en producto.
+
+   El argumento es de jerarquía visual y de coherencia con el patrón consumer establecido. Apps como Twitter, Instagram (en su versión web), GitHub y Notion tratan al avatar en top-right como affordance universal — no necesitan duplicarlo en el navbar. Spota hace lo mismo. Para preservar feedback visual del estado de navegación, el botón del avatar pinta su fondo con `primarySoft` cuando el usuario está en cualquier pantalla del área de perfil (incluye `profile`, `preferences`, `credentials`, `editProfile`, `myExperiences`, `registerHost`, `hostDashboard`).
+
+   Se evaluó la alternativa de agregar un dropdown contextual al avatar — patrón estándar en SaaS (GitHub, Notion, Linear). La decisión fue **descartarlo** para Spota porque el patrón mental del producto es distinto: el usuario explora y guarda, no hay ciclo "login → trabajo → logout" que justifique consolidar acciones en un menú escondido. El click directo es más rápido para el caso "ir al perfil", que es la acción dominante.
+
+11. **`Preferences` como single-page con `mode` flag.** El brief original tenía a la pantalla de preferencias como CU-04 sin distinguir si era para onboarding (primera vez) o para edición (usuario ya configurado). La implementación inicial del desktop la trataba como editor de settings y omitía el paso de onboarding después de `Register`, lo que rompía el loop conceptual del flujo de auth.
+
+   La solución elegida fue **una pantalla, dos contextos**, controlada por un parámetro `mode`. El mismo componente reacciona al modo:
+
+   | Aspecto | `mode='onboarding'` | `mode='edit'` (default) |
+   |---|---|---|
+   | Origen del trigger | Submit de `Register` | Click desde Perfil → Cuenta → Preferencias |
+   | Kicker | "Bienvenida a Spota" | (sin kicker) |
+   | Título | "Antes de empezar" | "Tus preferencias" |
+   | Subtítulo | Dirigido a usuario nuevo | Explica afinidad cruzada |
+   | Breadcrumb | No (no hay perfil al que volver todavía) | Perfil / Preferencias |
+   | CTA | "Empezar a explorar" → `home` | "Guardar preferencias" → `profile` |
+   | Botón Cancelar | No | Sí |
+
+   El formulario subyacente es idéntico (tipos de experiencia, zonas, contexto, frecuencia). La decisión refleja una observación más general: **las pantallas de configuración del usuario casi siempre tienen dos modos** (onboarding y edit) y el costo de separarlas en dos componentes es mayor que el costo de un flag de modo. El mobile aplica el mismo principio en su `ScreenPreferences` (donde el wizard de onboarding y el editor de prefs son el mismo componente reactivo). Generalizar este patrón a otras pantallas (`ScreenCredentials`, `ScreenEditProfile`) queda anotado en backlog como una mejora consistente de futuro.

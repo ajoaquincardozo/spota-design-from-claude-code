@@ -16,9 +16,14 @@ El mercado objetivo son residentes urbanos de 18 a 45 años en CABA/AMBA, con h�
 
 - **Source of truth en runtime (mobile):** `prototipo/Spota Prototipo.html`. Único archivo autocontenido que carga React 18 y Babel-standalone por CDN y compila JSX en el browser. Se levanta con `python3 -m http.server 8000` desde `prototipo/`.
 - **Source of truth en runtime (desktop):** `prototipo-desktop/Spota Prototipo Desktop.html`. Mismo enfoque autocontenido. Breakpoint mínimo 1024 px. Se levanta con `python3 -m http.server 8001` desde `prototipo-desktop/`. Cubre los 23 CUs en paralelo al mobile, con TopNav + footer en lugar de TabBar inferior, layouts multi-columna donde aplica, modales en vez de full-screen para acciones cortas, y un panel B2B con `BizFrame` (sidebar dedicado).
-- **Cobertura:** mobile cubre 31 pantallas y desktop 22+ pantallas, ambas sobre los 23 CUs definidos más auxiliares.
+- **Cobertura funcional:** mobile y desktop cubren los 23 CUs más auxiliares (welcome, editProfile, loggedOut, etc.). Cero pantallas en estado "próxima fase" en desktop tras Fase 7. Pendiente único: `editProfile` mobile.
+- **UI Kit / Design System:** página de referencia accesible en ambos prototipos. Mobile: Perfil → Cuenta → "UI Kit · Design System". Desktop: ícono ✦ del TopNav.
 - **Backup histórico:** `template/` conserva el estado original recibido (incluye `.jsx` sueltos que están desfasados respecto al HTML; no se cargan en runtime).
-- **Docs de entrega:** la justificación de las decisiones de diseño compartidas (paleta, navegación, regla 5±2, Fitts, etc.) vive en [`entrega/justificacion-diseno.md`](entrega/justificacion-diseno.md). El plan y las decisiones específicas del desktop están en [`entrega/plan-desktop.md`](entrega/plan-desktop.md). Este `CLAUDE.md` es el brief operativo y la memoria de decisiones.
+- **Docs de entrega:**
+  - [`entrega/justificacion-diseno.md`](entrega/justificacion-diseno.md) — justificación de decisiones de diseño compartidas (paleta, navegación, regla 5±2, Fitts, leyes UX, diagramas de estado).
+  - [`entrega/plan-desktop.md`](entrega/plan-desktop.md) — plan de las 6 fases del prototipo desktop, todas completadas.
+  - [`entrega/backlog.md`](entrega/backlog.md) — items diferidos, decisiones cerradas que no van, mejoras técnicas para producción.
+  - Este `CLAUDE.md` es el brief operativo y la memoria de decisiones (D1-D14).
 - **Material de cátedra y referencia:** `docs/` (excluido del repo por peso, ~60 MB).
 
 ---
@@ -159,17 +164,25 @@ Los negocios reclaman su perfil, publican beneficios exclusivos, configuran camp
 
 ## Navegación principal
 
-### App del usuario (tab bar inferior en mobile / navbar en desktop)
+### App del usuario — mobile (tab bar inferior)
 1. **Descubrir** (Home) → CU-06
 2. **Colecciones** → CU-10, CU-11
-3. **Publicar** (acción central) → CU-07
+3. **Publicar** (FAB central) → CU-07
 4. **Planes** → CU-12, CU-13, CU-14
 5. **Perfil** → CU-04, CU-05, CU-09
+
+### App del usuario — desktop (TopNav superior)
+1. **Descubrir** (Home) → CU-06
+2. **Colecciones** → CU-10, CU-11
+3. **Planes** → CU-12, CU-13, CU-14
+
+El acceso al **Perfil** en desktop es exclusivamente vía el avatar en el extremo derecho del TopNav (D13). "Publicar" vive como botón terracota dedicado en el TopNav, no como tab.
 
 ### Accesos secundarios
 - **Marketplace de Hosts:** entrada **contextual desde el plan grupal** únicamente. Aparece como bloque "¿Necesitan un host?" en `ScreenCreatePlan` y `ScreenPlanVote` (sub-estado *Sin host*) y como card del host contratado en `ScreenPlanClose` (sub-estado *Con host*). No tiene entrada directa desde Discover ni desde el perfil del usuario, porque contratar un host sin un plan que lo ancle es decisión sin contexto.
 - **Registrarse como Host:** desde menú de perfil, flujo diferenciado (es una evolución natural del rol del usuario — cualquier persona puede convertir su conocimiento local en servicio).
 - **Postularse a Oferta:** dashboard del host dentro de su perfil.
+- **Login de Negocios:** toggle Usuario / Negocio dentro de `ScreenLogin` (mobile y desktop). Una sola pantalla de auth, dos contextos. En modo Negocio el accent es terracota y el submit va a `bizHome`. Coherente con D3.
 
 ### App de negocios (login separado)
 - Dashboard principal con accesos a: CU-19, CU-20, CU-21, CU-22, CU-23
@@ -256,5 +269,7 @@ Decisiones tomadas durante el prototipado que no estaban en el brief original. S
 | D10 | **Sub-máquina del host dentro del plan grupal:** dos estados (*Sin host* — default sin etiqueta visible — y *Con host* — card visible con avatar/Fama/propuesta), transición irreversible (no hay cancelación). El bloque vive como slot persistente en `ScreenCreatePlan`, `ScreenPlanVote` y `ScreenPlanClose`. Reemplaza el teaser del Marketplace en Discover, que se elimina. Solo el creador del plan opera la sub-máquina. | Apéndice §9 |
 | D11 | **Prototipo desktop como archivo separado, no responsive del mobile:** vive en `prototipo-desktop/`, mismo stack autocontenido. Adaptar el mobile vía media queries forzaba layouts; un prototipo nuevo permite recomponer con libertad sin contaminar el mobile estable. Si en una segunda fase se quiere consolidar, se puede extraer un `design-system.js` común. | Plan-desktop §2 |
 | D12 | **Discover desktop = lista + mapa simultáneos, no toggle:** la pantalla pivote del desktop usa dos columnas (lista 60 % a la izquierda, mapa SVG 40 % sticky a la derecha). El toggle Lista/Mapa del mobile no aplica porque hay espacio para ambos. Sincronización bidireccional: click en card resalta el pin, click en pin muestra card flotante. | Plan-desktop §3 |
+| D13 | **"Perfil" fuera del navbar desktop:** el avatar en top-right es la única entrada al perfil. El navbar queda enfocado en producto (Descubrir / Colecciones / Planes). Coherente con apps consumer que tratan al avatar como affordance universal (Twitter, Instagram, GitHub). El avatar tiene active state visual cuando estás en cualquier sub-pantalla del área de perfil. | Apéndice §10 |
+| D14 | **Preferences single-page con `mode` flag (onboarding ↔ edit):** una sola pantalla `ScreenPreferences` cubre dos contextos. Cuando se entra desde `Register` (`mode='onboarding'`), el copy es de bienvenida, sin breadcrumb, CTA "Empezar a explorar" → home. Cuando se entra desde Perfil (`mode='edit'`, default), el copy es de edición, con breadcrumb y botones Cancelar/Guardar. Mismo formulario, dos copys. Es el patrón canónico que ya usa el mobile (donde wizard de onboarding y editor de prefs son la misma pantalla con flag). | Apéndice §11 |
 
 Cuando se tome una nueva decisión que afecte la marca, la navegación o la jerarquía visual: se suma una fila acá con el resumen y se profundiza la justificación en el doc de entrega.
