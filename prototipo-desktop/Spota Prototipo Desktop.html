@@ -676,7 +676,7 @@ const MapView = ({ selected, onSelect }) => {
   const place = PLACES.find(p => p.id === selected);
 
   return (
-    <div style={{ position: 'relative', height: '100%', minHeight: 600, borderRadius: SPOTA.radius.lg, overflow: 'hidden', border: `1px solid ${SPOTA.c.lineSoft}` }}>
+    <div style={{ position: 'relative', height: '100%', borderRadius: SPOTA.radius.lg, overflow: 'hidden', border: `1px solid ${SPOTA.c.lineSoft}` }}>
       <div style={{ position: 'absolute', inset: 0, background: '#EDE7DA' }}>
         <svg width="100%" height="100%" style={{ position: 'absolute', inset: 0 }} preserveAspectRatio="none" viewBox="0 0 100 100">
           <ellipse cx="78" cy="18" rx="28" ry="14" fill="#CFE3C0" opacity="0.9" />
@@ -1024,7 +1024,7 @@ const ScreenCollections = ({ nav }) => {
             Listas temáticas de lugares. Pueden ser privadas o compartidas con la comunidad.
           </p>
         </div>
-        <Btn variant="primary" icon="plus">Nueva colección</Btn>
+        <Btn variant="primary" icon="plus" onClick={() => nav('createCollection')}>Nueva colección</Btn>
       </div>
 
       {/* Tabs */}
@@ -1208,6 +1208,8 @@ const ScreenPublish = ({ nav }) => {
   const [text, setText] = React.useState('');
   const [visibility, setVisibility] = React.useState('public');
   const [hostRated, setHostRated] = React.useState(0);
+  const [chips, setChips] = React.useState([]);
+  const togChip = (t) => setChips(c => c.includes(t) ? c.filter(x => x !== t) : [...c, t]);
   const total = 3;
   const next = () => step < total ? setStep(step + 1) : nav('home');
   const back = () => step > 1 ? setStep(step - 1) : nav('home');
@@ -1311,9 +1313,19 @@ const ScreenPublish = ({ nav }) => {
             }} />
 
             <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
-              {['Excelente café', 'Buena onda', 'Lindo lugar', 'Volvería', 'Pastelería rica', 'Wifi rápido', 'Para trabajar', 'Buena música', 'Atención amable', 'Buen precio'].map(t => (
-                <button key={t} style={{ padding: '8px 14px', borderRadius: 999, background: SPOTA.c.surface, border: `1px solid ${SPOTA.c.line}`, fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.textSoft, cursor: 'pointer' }}>+ {t}</button>
-              ))}
+              {['Excelente café', 'Buena onda', 'Lindo lugar', 'Volvería', 'Pastelería rica', 'Wifi rápido', 'Para trabajar', 'Buena música', 'Atención amable', 'Buen precio'].map(t => {
+                const on = chips.includes(t);
+                return (
+                  <button key={t} onClick={() => togChip(t)} style={{
+                    padding: '8px 14px', borderRadius: 999, cursor: 'pointer',
+                    background: on ? SPOTA.c.primary : SPOTA.c.surface,
+                    color: on ? '#fff' : SPOTA.c.textSoft,
+                    border: `1px solid ${on ? SPOTA.c.primary : SPOTA.c.line}`,
+                    fontFamily: SPOTA.font.ui, fontSize: 13, fontWeight: on ? 600 : 500,
+                    transition: 'background 150ms, color 150ms',
+                  }}>{on ? '✓' : '+'} {t}</button>
+                );
+              })}
             </div>
           </>
         )}
@@ -2849,7 +2861,7 @@ const ScreenProfile = ({ nav }) => (
           </div>
           <h1 style={{ margin: 0, fontFamily: SPOTA.font.ui, fontSize: 22, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.4 }}>Sol Benítez</h1>
           <p style={{ margin: '4px 0 16px', fontFamily: SPOTA.font.ui, fontSize: 13.5, color: SPOTA.c.textSoft }}>@solbenitez · Palermo</p>
-          <Btn variant="outline" full icon="edit">Editar perfil</Btn>
+          <Btn variant="outline" full icon="edit" onClick={() => nav('editProfile')}>Editar perfil</Btn>
         </div>
 
         {/* Fama Score card */}
@@ -2877,8 +2889,8 @@ const ScreenProfile = ({ nav }) => (
         {/* Stats compactos */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
           {[
-            { n: '47', l: 'Visitados', id: 'home' },
-            { n: '12', l: 'Reseñas', id: 'home' },
+            { n: '47', l: 'Visitados', id: 'myExperiences' },
+            { n: '12', l: 'Reseñas', id: 'myExperiences' },
             { n: '4', l: 'Colecciones', id: 'collections' },
           ].map(s => (
             <button key={s.l} onClick={() => nav(s.id)} style={{
@@ -2902,7 +2914,7 @@ const ScreenProfile = ({ nav }) => (
           <h2 style={{ margin: '0 0 14px', fontFamily: SPOTA.font.ui, fontSize: 20, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.3 }}>Mi actividad</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
             {[
-              { id: 'home', t: 'Mis experiencias', s: '12 reseñas · 3 por valorar', i: 'compass' },
+              { id: 'myExperiences', t: 'Mis experiencias', s: '12 reseñas · 3 por valorar', i: 'compass' },
               { id: 'collections', t: 'Mis colecciones', s: '4 listas guardadas', i: 'bookmark' },
               { id: 'plans', t: 'Mis planes', s: '2 planes activos', i: 'calendar' },
             ].map(o => (
@@ -2974,12 +2986,12 @@ const ScreenProfile = ({ nav }) => (
           <h2 style={{ margin: '0 0 14px', fontFamily: SPOTA.font.ui, fontSize: 20, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.3 }}>Cuenta</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[
-              { t: 'Preferencias', s: 'Tipos de experiencia, zona, contexto', i: 'sparkles' },
-              { t: 'Credenciales y privacidad', s: 'Email, contraseña, datos personales', i: 'lock' },
-              { t: 'Notificaciones', s: 'Plan grupal, beneficios, hosts', i: 'bell' },
+              { id: 'preferences',   t: 'Preferencias', s: 'Tipos de experiencia, zona, contexto', i: 'sparkles' },
+              { id: 'credentials',   t: 'Credenciales y privacidad', s: 'Email, contraseña, datos personales', i: 'lock' },
+              { id: 'notifications', t: 'Notificaciones', s: 'Plan grupal, beneficios, hosts', i: 'bell' },
             ].map(o => (
-              <div key={o.t} style={{
-                display: 'flex', alignItems: 'center', gap: 14, padding: 14,
+              <button key={o.id} onClick={() => nav(o.id)} style={{
+                display: 'flex', alignItems: 'center', gap: 14, padding: 14, width: '100%', textAlign: 'left',
                 background: SPOTA.c.surface, borderRadius: 12, border: `1px solid ${SPOTA.c.lineSoft}`, cursor: 'pointer',
                 transition: 'border-color 150ms, background 150ms',
               }}
@@ -2991,14 +3003,14 @@ const ScreenProfile = ({ nav }) => (
                   <div style={{ fontFamily: SPOTA.font.ui, fontSize: 12.5, color: SPOTA.c.textSoft, marginTop: 2 }}>{o.s}</div>
                 </div>
                 <Icon name="arrowRight" size={16} color={SPOTA.c.textSoft} />
-              </div>
+              </button>
             ))}
           </div>
         </div>
 
         {/* Cerrar sesión */}
         <div style={{ paddingTop: 16, borderTop: `1px solid ${SPOTA.c.lineSoft}` }}>
-          <button onClick={() => nav('home')} style={{
+          <button onClick={() => nav('loggedOut')} style={{
             background: 'transparent', border: 'none', cursor: 'pointer',
             fontFamily: SPOTA.font.ui, fontWeight: 600, fontSize: 14, color: SPOTA.c.textSoft,
             display: 'inline-flex', alignItems: 'center', gap: 8, padding: 0,
@@ -3016,9 +3028,19 @@ Object.assign(window, { ScreenProfile });
 
 <!-- app.jsx -->
 <script type="text/babel" data-presets="react">
-// Pantalla "en construcción" para rutas todavía no implementadas en este protoype.
+// Metadata para pantallas que aún no están implementadas pero deben tener label propio en ScreenSoon.
+const SCREEN_META = {
+  preferences:      { label: 'Preferencias', icon: 'sparkles' },
+  credentials:      { label: 'Credenciales y privacidad', icon: 'lock' },
+  notifications:    { label: 'Notificaciones', icon: 'bell' },
+  createCollection: { label: 'Nueva colección', icon: 'plus' },
+  editProfile:      { label: 'Editar perfil', icon: 'edit' },
+  myExperiences:    { label: 'Mis experiencias', icon: 'compass' },
+};
+
+// Pantalla "en construcción" para rutas todavía no implementadas en este prototipo.
 const ScreenSoon = ({ current, nav }) => {
-  const meta = NAV_ITEMS.find(n => n.id === current) || { label: current, icon: 'sparkles' };
+  const meta = SCREEN_META[current] || NAV_ITEMS.find(n => n.id === current) || { label: current, icon: 'sparkles' };
   return (
     <section style={{ padding: '80px 0', textAlign: 'center', maxWidth: 480, margin: '0 auto' }}>
       <div style={{ width: 72, height: 72, borderRadius: 999, background: SPOTA.c.primarySoft, margin: '0 auto 20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -3038,6 +3060,30 @@ const ScreenSoon = ({ current, nav }) => {
     </section>
   );
 };
+
+// Destino de "Cerrar sesión". Full-bleed, sin chrome — coherente con bizRegister.
+const ScreenLoggedOut = ({ nav }) => (
+  <div style={{ minHeight: '100vh', background: SPOTA.c.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32 }}>
+    <div style={{ maxWidth: 420, width: '100%', background: SPOTA.c.surface, borderRadius: 18, padding: 32, boxShadow: SPOTA.shadow.pop, border: `1px solid ${SPOTA.c.lineSoft}`, textAlign: 'center' }}>
+      <div style={{ display: 'inline-flex', justifyContent: 'center', marginBottom: 14 }}>
+        <SpotaLogo size={32} />
+      </div>
+      <div style={{ width: 64, height: 64, borderRadius: 999, background: SPOTA.c.primarySoft, margin: '8px auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Icon name="logout" size={28} color={SPOTA.c.primary} />
+      </div>
+      <h1 style={{ margin: '0 0 8px', fontFamily: SPOTA.font.ui, fontSize: 22, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.4 }}>
+        Cerraste <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', color: SPOTA.c.secondary, fontWeight: 500 }}>sesión</span>
+      </h1>
+      <p style={{ margin: '0 0 22px', fontFamily: SPOTA.font.ui, fontSize: 14, color: SPOTA.c.textSoft, lineHeight: 1.55 }}>
+        Hasta la próxima salida. Cuando quieras volver, te esperamos con experiencias frescas en tu zona.
+      </p>
+      <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+        <Btn variant="primary" icon="compass" onClick={() => nav('home')}>Volver a entrar</Btn>
+        <Btn variant="outline" onClick={() => nav('bizRegister')}>Soy un negocio</Btn>
+      </div>
+    </div>
+  </div>
+);
 
 const SCREENS = {
   home:             ScreenDiscover,
@@ -3062,12 +3108,21 @@ const SCREENS = {
   bizInsights:      ScreenBizInsights,
   uikit:            ScreenDesignSystem,
   profile:          ScreenProfile,
+  // Próxima fase — placeholders con label propio
+  preferences:      ScreenSoon,
+  credentials:      ScreenSoon,
+  notifications:    ScreenSoon,
+  createCollection: ScreenSoon,
+  editProfile:      ScreenSoon,
+  myExperiences:    ScreenSoon,
+  loggedOut:        ScreenLoggedOut,
 };
 
 // Mapping de pantalla a ítem del nav (para resaltar el tab activo cuando estás en una pantalla hija).
 const NAV_PARENT = {
   placeDetail: 'home',
   collectionDetail: 'collections',
+  createCollection: 'collections',
   createPlan: 'plans',
   planVote: 'plans',
   planClose: 'plans',
@@ -3076,12 +3131,17 @@ const NAV_PARENT = {
   hireHost: 'plans',
   registerHost: 'profile',
   hostDashboard: 'profile',
+  preferences: 'profile',
+  credentials: 'profile',
+  notifications: 'profile',
+  editProfile: 'profile',
+  myExperiences: 'profile',
 };
 
 // Pantallas del panel de Negocios — usan BizFrame en lugar del DesktopFrame.
 const BIZ_SCREENS = new Set(['bizHome', 'claimPlace', 'bizBenefits', 'bizCampaign', 'bizInsights']);
 // Pantallas sin frame (entry sin auth, full-bleed).
-const NO_FRAME_SCREENS = new Set(['bizRegister']);
+const NO_FRAME_SCREENS = new Set(['bizRegister', 'loggedOut']);
 
 function App() {
   const [current, setCurrent] = React.useState('home');

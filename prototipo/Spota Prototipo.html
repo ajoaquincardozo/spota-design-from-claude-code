@@ -2311,6 +2311,8 @@ const ScreenPublish = ({ nav }) => {
   const [text, setText] = React.useState('');
   const [visibility, setVisibility] = React.useState('public');
   const [hostRated, setHostRated] = React.useState(0);
+  const [chips, setChips] = React.useState([]);
+  const togChip = (t) => setChips(c => c.includes(t) ? c.filter(x => x !== t) : [...c, t]);
   const total = 3;
 
   // Visitas con Proof of Visit ya validado y aún sin reseñar.
@@ -2404,9 +2406,19 @@ const ScreenPublish = ({ nav }) => {
               fontFamily: SPOTA.font.ui, fontSize: 15, color: SPOTA.c.text, resize: 'vertical', outline: 'none',
             }} />
             <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
-              {['Excelente café', 'Buena onda', 'Lindo lugar', 'Volvería', 'Pastelería rica', 'Wifi rápido', 'Para trabajar', 'Buena música', 'Atención amable', 'Buen precio'].map(t => (
-                <button key={t} style={{ padding: '6px 12px', borderRadius: 999, background: SPOTA.c.surface, border: `1px solid ${SPOTA.c.line}`, fontFamily: SPOTA.font.ui, fontSize: 12, color: SPOTA.c.textSoft, cursor: 'pointer' }}>+ {t}</button>
-              ))}
+              {['Excelente café', 'Buena onda', 'Lindo lugar', 'Volvería', 'Pastelería rica', 'Wifi rápido', 'Para trabajar', 'Buena música', 'Atención amable', 'Buen precio'].map(t => {
+                const on = chips.includes(t);
+                return (
+                  <button key={t} onClick={() => togChip(t)} style={{
+                    padding: '6px 12px', borderRadius: 999, cursor: 'pointer',
+                    background: on ? SPOTA.c.primary : SPOTA.c.surface,
+                    color: on ? '#fff' : SPOTA.c.textSoft,
+                    border: `1px solid ${on ? SPOTA.c.primary : SPOTA.c.line}`,
+                    fontFamily: SPOTA.font.ui, fontSize: 12, fontWeight: on ? 600 : 500,
+                    transition: 'background 150ms, color 150ms',
+                  }}>{on ? '✓' : '+'} {t}</button>
+                );
+              })}
             </div>
           </>
         )}
