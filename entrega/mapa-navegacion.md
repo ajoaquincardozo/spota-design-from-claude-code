@@ -1,6 +1,8 @@
 # Mapa de navegación — Spota
 
-Este documento describe los flujos del usuario en el prototipo de Spota, comparando mobile y desktop. La regla es **mismos casos de uso, distinto shell**: los 23 CUs y todos los flujos del usuario son idénticos en ambas plataformas; lo que cambia es la composición de la navegación principal y la composición visual de algunas pantallas pivote, todas justificadas por decisiones consolidadas en `Claude.md` (D1-D18).
+Este documento describe los flujos del usuario en el prototipo de Spota, comparando mobile y desktop. La regla es **mismos casos de uso, distinto shell**: los 23 CUs y todos los flujos del usuario son idénticos en ambas plataformas; lo que cambia es la composición de la navegación principal y la composición visual de algunas pantallas pivote, todas justificadas por decisiones consolidadas en `CLAUDE.md` (D1-D18).
+
+> **Versión.** Última pasada de sincronización: cierre de Sesión B+ (audit `entrega/prototipo_vs_cu.md`, 42 items resueltos / diferidos). Cambios principales reflejados acá: CU-08 ⚪ Absorbido en CU-07 (`rate` eliminado del mobile); pantalla `resetPassword` sumada (CU-001-003 pasos 12-21); `welcome` desktop oculto (no es CU); entry directo a `bizSubscribe` desde `bizHome`; mismatch de CUs en planificación y marketplace corregidos.
 
 Los diagramas usan sintaxis Mermaid, que renderiza nativo en GitHub y en VS Code preview. Los identificadores entre paréntesis son los `id` reales de las pantallas registradas en `SCREENS` dentro de cada prototipo.
 
@@ -157,47 +159,37 @@ Cada bloque representa un ciclo del usuario. Los flujos son idénticos en mobile
 
 ### 3.1 Onboarding y Auth — CU-01 a CU-05
 
-**Mobile**
+El flujo de auth es **simétrico entre mobile y desktop**: ambos arrancan en `login` (no hay landing pública intermedia — ver nota al pie del bloque sobre `welcome`). El recover incluye la pantalla `resetPassword` (CU-001-003 §3.12 pasos 12-21) que se alcanza vía el link del mail (en el prototipo, mediante un "Tip prototipo" en el success de `recover`).
 
 ```mermaid
 flowchart TD
-    Login[login con foto] -->|Usuario| LoginUser[Form Usuario]
-    Login -->|Negocio| LoginBiz[Form Negocio]
-    Login --> RegisterLink{¿Sin cuenta?}
-    Login --> RecoverLink{¿Olvidaste?}
-    RegisterLink --> Register[register]
-    RecoverLink --> Recover[recover]
-    LoginUser --> Home[home]
+    Login[login] -->|toggle Usuario| LoginUser[Form Usuario]
+    Login -->|toggle Negocio| LoginBiz[Form Negocio]
+    Login -->|"¿Sin cuenta? Crear cuenta"| Register[register]
+    Login -->|"¿Olvidaste tu contraseña?"| Recover[recover]
+    LoginUser --> VerifyCode[verifyCode]
+    VerifyCode -->|"código válido"| Home[home]
     LoginBiz --> BizHome[bizHome]
-    Register --> Preferences[preferences mode=onboarding]
-    Preferences -->|Empezar a explorar| Home
-    Recover --> Login
-```
-
-**Desktop**
-
-```mermaid
-flowchart TD
-    Welcome[welcome - landing pública] -->|Iniciar sesión| Login[login split layout]
-    Welcome -->|Crear cuenta| Register[register]
-    Welcome -->|¿Tenés un negocio?| BizReg[bizRegister from=welcome]
-    Login -->|Usuario| Home[home]
-    Login -->|Negocio toggle| BizHome[bizHome]
-    Login -->|¿Olvidaste?| Recover[recover]
-    Login -->|Sumalo en footer| BizReg2[bizRegister from=login]
-    Register --> Preferences[preferences mode=onboarding]
-    Preferences -->|Empezar a explorar| Home
-    Recover --> Login
+    Register --> VerifyCode2[verifyCode]
+    VerifyCode2 --> Preferences[preferences mode=onboarding]
+    Preferences -->|"Empezar a explorar"| Home
+    Recover -->|"Enviar link"| RecoverSent[recover success<br/>+ Tip prototipo]
+    RecoverSent -->|"Simular click en link"| Reset[resetPassword]
+    Reset -->|"Actualizar contraseña"| Login
+    Login -->|"Sumalo en footer"| BizReg[bizRegister from=login]
 ```
 
 **Diferencias estructurales del bloque**
 
 | Aspecto | Mobile | Desktop | Decisión |
 |---|---|---|---|
-| Pantalla pública previa al login | No existe (Splash eliminado) | `welcome` como landing pública | D15 |
+| Entry inicial al cargar | `login` | `login` (idéntico) | D15 — `welcome` desktop quedó preservado en código pero sin entries (ver nota) |
 | Layout del login | Foto fullscreen integrada | Split (foto+hero a la izquierda 55 %, form a la derecha 45 %) | D15, D16 |
 | Toggle Usuario/Negocio | Adentro del form de login | Adentro del form (igual) | D3 |
-| Entry a bizRegister | Solo desde toggle del login | Desde welcome, footer DesktopFrame, footer del login (cada uno con `params.from`) | D3, D17 |
+| Entry a `bizRegister` | Toggle del login (`from: login`) | Toggle del login (`from: login`) + footer del DesktopFrame logueado (`from: home`), con D17 | D3, D17 |
+| `resetPassword` (pasos 12-21 del CU-001-003) | Pantalla full-screen con form pwd + confirm | `AuthCard` con mismo form | — |
+
+> **Nota — `welcome` desktop.** Quedó preservado en el código por D16 / compatibilidad con el handler `from: 'welcome'` de `bizRegister`, pero no es un CU canónico ni tiene entry points activos en runtime (`nav('welcome')` count = 0). Para fines de arquitectura de información, **tratamos `welcome` como inexistente**.
 
 ### 3.2 Descubrir — CU-06
 
@@ -234,20 +226,21 @@ flowchart TD
     EntryBtn --> Publish
     Publish -->|paso 1| P1[Elegir visita validada]
     P1 --> P2[Valoración + reseña + chips]
-    P2 --> P3[Visibilidad + rating de host]
-    P3 -->|Publicar| Profile[profile]
-    Profile --> MyExp[myExperiences]
-    MyExp -->|edit/eliminar| MyExp
-
-    Home --> Rate[rate desde feed comunidad]
-    Rate --> Profile
+    P2 --> P3[Visibilidad + rating de host condicional]
+    P3 -->|Publicar| PD[placeDetail con reseña visible]
+    Profile[profile] --> MyExp[myExperiences]
+    MyExp -->|edit visibilidad / eliminar| MyExp
+    MyExp -->|Visitados sin valorar| Publish
+    PD -->|Ver tu reseña| MyExp
 ```
 
 **Notas**
 
-- D9 estableció wizard de 3 pasos (no 4): la validación GPS ocurre en background y no aparece en el wizard.
-- Entry a `publish`: en mobile es el FAB central (D2); en desktop es el botón "Publicar" en el TopNav (extremo derecho, terracota). En ambos es prominente.
-- `myExperiences` solo se accede desde Perfil → bloque "Mis experiencias", coherente en ambas plataformas.
+- D9 — wizard de 3 pasos (no 4): la validación GPS ocurre en background y no aparece en el wizard.
+- Entry a `publish`: mobile = FAB central (D2); desktop = botón "Publicar" en TopNav (terracota). En ambos es prominente.
+- **CU-08 ⚪ Absorbido en CU-07.** La valoración de reseñas de la comunidad pasó a ser **implícita silenciosa** (`propuestas_mejora_cu.md` §3.17 — CU-003-002 absorbido): el sistema infiere "me sirvió" según las reseñas que el usuario navegó durante discovery. No hay pantalla `rate` ni botón "Valorar reseña" — se eliminaron del prototipo mobile en Sesión B para alinear con la decisión canónica.
+- Bloque "Calificá al host" en `publish` paso 3 es condicional: aparece solo si la visita seleccionada tiene `host` contratado.
+- Redirect post-publish: `placeDetail` (no Profile) para mostrar la reseña en contexto.
 
 ### 3.4 Colecciones — CU-10 a CU-11
 
@@ -316,21 +309,25 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    M_LoginToggle[login - toggle Negocio mobile/desktop] -->|from=login| BizReg[bizRegister]
-    D_Welcome[welcome desktop] -->|"¿Tenés un negocio?"| BizReg
-    D_Footer[Footer DesktopFrame logged-in] -->|from=home| BizReg
+    M_LoginToggle[login toggle Negocio<br/>mobile + desktop] -->|from=login| BizReg[bizRegister]
+    D_Footer[Footer DesktopFrame<br/>logged-in user] -->|from=home| BizReg
     BizReg --> BizHome[bizHome]
-    BizHome --> Claim[claim - reclamar mi lugar]
+    BizHome --> Claim[claimPlace · reclamar mi lugar]
     BizHome --> Benefits[bizBenefits]
     BizHome --> Campaign[bizCampaign]
     BizHome --> Insights[bizInsights]
+    BizHome --> Subscribe[bizSubscribe · Tier]
+    Insights -->|Ejecutar reporte One-off| InsightsRes[bizInsightsResult]
+    InsightsRes -->|"Pasá a Tier"| Subscribe
 ```
 
 **Notas**
 
-- D17 — el back link de `bizRegister` adapta copy y destino según `params.from`.
-- D3 — el panel B2B usa `BizFrame` en desktop (sidebar dedicado) en lugar del `DesktopFrame` general. En mobile, la transición a B2B reemplaza la TabBar por una nav adaptada.
-- El logout del panel B2B navega a `login`, no a `home`, para devolver al usuario al estado pre-autenticación correcto.
+- D17 — el back link de `bizRegister` adapta copy y destino según `params.from` (`login` o `home`).
+- D3 — el panel B2B usa `BizFrame` en desktop (sidebar dedicado, con ítems: Dashboard · Beneficios · Campañas · Insights · **Suscripción Tier** · Reclamar otro lugar). En mobile, la transición a B2B reemplaza la TabBar y se navega vía tiles de "Herramientas" en `bizHome`.
+- `bizSubscribe` tiene **dos entries**: directo desde `bizHome` (tile mobile / ítem sidebar desktop) y contextual desde `bizInsightsResult` cuando el usuario está en modalidad One-off.
+- `bizInsightsResult` es sub-pantalla de CU-23 (resultados del reporte) — no se accede sin ejecutar antes el filtro en `bizInsights`.
+- El logout del panel B2B navega a `login` (estado pre-auth correcto).
 
 ### 3.8 Perfil — CU-04, CU-05, transversal
 
@@ -365,37 +362,40 @@ Equivalencia 1:1 entre el inventario de pantallas del prototipo mobile y desktop
 |---|---|---|---|---|
 | CU-01 | Crear cuenta | `register` | `register` | — |
 | CU-02 | Iniciar sesión | `login` | `login` | Mobile: foto integrada (D15). Desktop: split layout (D16) |
-| CU-03 | Recuperar contraseña | `recover` | `recover` | — |
+| CU-02 | Verificación por código | `verifyCode` | `verifyCode` | Auxiliar de CU-02 (6 dígitos, tip prototipo `123456`) |
+| CU-03 | Recuperar contraseña (pedir link) | `recover` | `recover` | Pasos 1-9 del CU-001-003 |
+| CU-03 | Nueva contraseña | `resetPassword` | `resetPassword` | Pasos 12-21 del CU-001-003. Entry via tip prototipo en el success de `recover` |
 | CU-04 | Preferencias | `preferences` | `preferences` | `mode` flag onboarding ↔ edit (D14) |
 | CU-05 | Credenciales | `credentials` | `credentials` | — |
 | CU-06 | Descubrir | `home` | `home` | Concierge-first (D18) |
 | CU-06 | Detalle de lugar | `placeDetail` | `placeDetail` | Sub-máquina Proof of Visit (D8) |
 | CU-06 | Resultados de búsqueda | `searchResults` | `searchResults` | Mobile: toggle Lista/Mapa. Desktop: 60 % + 40 % sticky (D12) |
-| CU-07 | Publicar experiencia | `publish` | `publish` | Wizard 3 pasos (D9) |
-| CU-08 | Valorar de la comunidad | `rate` | `rate` | — |
+| CU-07 | Publicar experiencia | `publish` | `publish` | Wizard 3 pasos (D9). Absorbe CU-08 como valoración implícita |
+| ⚪ CU-08 | Valorar reseña de la comunidad | — | — | **Absorbido en CU-07** (`propuestas_mejora_cu.md` §3.17). Sin pantalla. La valoración es implícita silenciosa |
 | CU-09 | Mis experiencias | `myExperiences` | `myExperiences` | — |
-| CU-10 | Mis colecciones | `collections` | `collections` | — |
-| CU-10 | Crear colección | `createCollection` | `createCollection` | Desktop: modal. Mobile: full-screen |
+| CU-10 | Crear colección | `createCollection` | `createCollection` | Desktop: modal. Mobile: full-screen. Entry alt: `placeDetail` botón "Guardar" |
+| CU-11 | Mis colecciones | `collections` | `collections` | — |
 | CU-11 | Detalle de colección | `collectionDetail` | `collectionDetail` | — |
-| CU-12 | Mis planes | `plans` | `plans` | — |
-| CU-13 | Crear plan grupal | `createPlan` | `createPlan` | HostBlock como slot (D10) |
+| CU-11 | Filtros de colecciones | `collectionsFilter` | `collectionsFilter` | — |
+| CU-12 | Crear plan grupal | `createPlan` | `createPlan` | HostBlock como slot (D10) |
 | CU-13 | Votar plan | `planVote` | `planVote` | HostBlock como slot (D10) |
-| CU-14 | Cerrar plan | `planClose` | `planClose` | HostBlock con card de host contratado (D10) |
-| CU-15 | Marketplace de hosts | `hostMarketplace` | `hostMarketplace` | Entry contextual (D10) |
+| CU-14 | Cerrar plan | `planClose` | `planClose` | HostBlock con card de host contratado (D10). Desktop: Fecha/Hora editables + lista nominal |
 | CU-15 | Publicar oferta de viaje | `createOffer` | `createOffer` | — |
+| CU-16 | Marketplace de hosts | `hostMarketplace` | `hostMarketplace` | Entry contextual desde plan (D10) |
 | CU-16 | Contratar host | `hireHost` | `hireHost` | — |
-| CU-17 | Registrarse como host | `registerHost` | `registerHost` | Entry desde profile (D3) |
-| CU-18 | Dashboard de host | `hostDashboard` | `hostDashboard` | — |
-| CU-19 | Reclamar lugar | `claim` | `claimPlace` | id distinto entre prototipos por nombrado histórico, mismo CU |
-| CU-20 | Registrar negocio | `registerBiz` | `bizRegister` | id distinto, mismo CU. Back contextual (D17) |
+| CU-17 | Registrarse como host | `registerHost` | `registerHost` | Entry desde profile (D3). Pasa `params.modalidad` a hostDashboard |
+| CU-18 | Dashboard de host | `hostDashboard` | `hostDashboard` | Refleja `modalidad` (Casual/Certificado) |
+| CU-19 | Reclamar lugar | `claimPlace` | `claimPlace` | id unificado en ambos prototipos |
+| CU-20 | Registrar negocio | `bizRegister` | `bizRegister` | id unificado. Back contextual (D17) |
 | CU-20 | Panel del negocio | `bizHome` | `bizHome` | BizFrame en desktop (D3) |
-| CU-21 | Beneficios | `bizBenefits` | `bizBenefits` | — |
+| CU-21 | Beneficios | `bizBenefits` | `bizBenefits` | Edit/trash funcionales con confirm |
 | CU-22 | Campaña | `bizCampaign` | `bizCampaign` | — |
-| CU-23 | Insights | `bizInsights` | `bizInsights` | — |
+| CU-23 | Insights · filtros | `bizInsights` | `bizInsights` | — |
+| CU-23 | Insights · resultado | `bizInsightsResult` | `bizInsightsResult` | Sub-pantalla del reporte ejecutado |
+| CU-23 | Suscripción Tier | `bizSubscribe` | `bizSubscribe` | Auxiliar de CU-23 (sub-flujo de monetización). Entry desde `bizHome` + contextual desde `bizInsightsResult` |
 | auxiliar | Perfil | `profile` | `profile` | Tab en mobile, avatar en desktop (D13) |
 | auxiliar | Editar perfil | — | `editProfile` | Pendiente en mobile (backlog §1) |
-| auxiliar | UI Kit / Design System | `uikit` | `uikit` | Mobile: Perfil → Cuenta. Desktop: ✦ del TopNav |
-| auxiliar | Welcome (landing pública) | — | `welcome` | Solo desktop. Mobile lo unificó en `login` (D15) |
+| auxiliar | UI Kit / Design System | `uikit` | `uikit` | Mobile: Perfil → Cuenta. Desktop: ✦ del TopNav. Sincronizado con D1-D18 |
 
 ---
 
@@ -407,11 +407,11 @@ Las diferencias entre mobile y desktop no son arbitrarias: cada una está justif
 |---|---|
 | TabBar inferior con FAB (mobile) vs TopNav superior + footer (desktop) | Adaptación de plataforma estándar. Mobile prioriza pulgar; desktop prioriza cursor y aprovecha aire horizontal |
 | Perfil en tab dedicado (mobile) vs avatar único (desktop) | D13 — el avatar es affordance universal en consumer apps; el navbar desktop queda enfocado en producto |
-| `login` con foto integrada (mobile) vs `welcome` + `login` split (desktop) | D15 + D16 — en mobile reduce el tap-count; en desktop el split aprovecha aire para distinguir marketing y transacción |
+| Layout del `login` | Mobile: foto integrada al fullscreen (D15). Desktop: split (foto+hero a la izquierda 55 %, form a la derecha 45 %) (D16). Ambos arrancan en `login` como pantalla inicial |
 | `searchResults` con toggle Lista/Mapa (mobile) vs lista + mapa simultáneos (desktop) | D12 — desktop tiene espacio para ambos sin penalizar lectura |
 | Buscador permanente en navbar | Solo en mobile (cuando lo había). En desktop se eliminó (D18) — competía contra el input hero del home |
 | `createCollection` y `createPlan` como modales (desktop) vs full-screen (mobile) | Patrón canónico — el desktop puede contener acciones cortas en modal sin ocultar el contexto; el mobile no |
-| Entry a `bizRegister` | Mobile: solo desde toggle del login. Desktop: tres entry points (welcome, footer DesktopFrame, footer login) con `params.from` (D17) |
+| Entry a `bizRegister` | Mobile: toggle del login (`from: login`). Desktop: toggle del login (`from: login`) + footer del DesktopFrame logueado (`from: home`). En ambos casos D17 |
 | `registerHost` adentro del Perfil; `bizRegister` afuera | D3 — host es evolución del rol del usuario; negocio es identidad separada |
 | Marketplace de Hosts entry contextual desde plan | D10 — coherente en ambas plataformas. No hay entry directo desde Discover ni desde Perfil del usuario |
 
@@ -419,19 +419,19 @@ Las diferencias entre mobile y desktop no son arbitrarias: cada una está justif
 
 ## 6. Apéndice — inventario plano de pantallas
 
-Todas las pantallas registradas en runtime, agrupadas por bloque. Sirve como fuente de verdad para el ABM de futuras navegaciones.
+Todas las pantallas con entry activo en runtime, agrupadas por bloque. Sirve como fuente de verdad para el ABM de futuras navegaciones.
 
 **Onboarding & Auth**
-`welcome` (solo desktop) · `login` · `register` · `recover` · `preferences` · `credentials` · `editProfile` (solo desktop)
+`login` · `verifyCode` · `register` · `recover` · `resetPassword` · `preferences` · `credentials` · `editProfile` (solo desktop)
 
 **Descubrir**
 `home` · `searchResults` · `placeDetail`
 
 **Experiencias y reputación**
-`publish` · `rate` · `myExperiences`
+`publish` · `myExperiences`
 
 **Colecciones**
-`collections` · `collectionDetail` · `createCollection`
+`collections` · `collectionsFilter` · `collectionDetail` · `createCollection`
 
 **Planificación grupal**
 `plans` · `createPlan` · `planVote` · `planClose`
@@ -440,7 +440,11 @@ Todas las pantallas registradas en runtime, agrupadas por bloque. Sirve como fue
 `hostMarketplace` · `createOffer` · `hireHost` · `registerHost` · `hostDashboard`
 
 **Negocios B2B**
-`bizRegister` (mobile: `registerBiz`) · `bizHome` · `claim` (desktop: `claimPlace`) · `bizBenefits` · `bizCampaign` · `bizInsights`
+`bizRegister` · `bizHome` · `claimPlace` · `bizBenefits` · `bizCampaign` · `bizInsights` · `bizInsightsResult` · `bizSubscribe`
 
 **Otras**
 `profile` · `uikit`
+
+**Pantallas preservadas en código sin entry activo (no se navegan)**
+- `welcome` (solo desktop) — landing pública. Quedó en el código por D16 / compatibilidad con `from: 'welcome'` de `bizRegister`. **No es CU canónico** y `nav('welcome')` count = 0 en runtime.
+- `rate` / `ScreenRateCommunity` (eliminada del mobile en Sesión B) — CU-08 ⚪ Absorbido en CU-07 (`propuestas_mejora_cu.md` §3.17).
