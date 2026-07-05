@@ -3915,56 +3915,85 @@ const PARTICIPANTS = 4; // mock: cantidad de participantes del plan asociado
 const COMMISSION_PCT = 0.12;
 
 // Paywall Variante A (mobile) — reutilizable. Sub-flujo de ingreso de tarjeta + facturación.
-const PaywallVariantA = ({ amount, onCancel, onConfirm }) => {
+const PaywallVariantA = ({ amount, onCancel, onConfirm, subtitle, ctaLabel, savedMedio, chargeNote }) => {
   const [card, setCard] = React.useState({ tipo: 'Tarjeta de crédito', numero: '', venc: '', cvv: '' });
   const [bill, setBill] = React.useState({ nombre: '', dni: '', iva: 'Consumidor final', email: '' });
   const [save, setSave] = React.useState(true);
+  const [expanded, setExpanded] = React.useState(!savedMedio);
+  const [processing, setProcessing] = React.useState(false);
   const setC = (k, v) => setCard(s => ({ ...s, [k]: v }));
   const setB = (k, v) => setBill(s => ({ ...s, [k]: v }));
+  const usingSaved = savedMedio && !expanded;
   const filled = card.numero && card.venc && card.cvv && bill.nombre && bill.dni && bill.email;
+  const canConfirm = usingSaved || filled;
+  const doConfirm = () => {
+    setProcessing(true);
+    setTimeout(() => onConfirm({ card: usingSaved ? savedMedio : card, bill, save }), 1100);
+  };
   return (
     <div style={{ position: 'absolute', inset: 0, background: SPOTA.c.bg, zIndex: 90, display: 'flex', flexDirection: 'column', animation: 'slideUp 240ms' }}>
-      <AppHeader title="Datos de pago" leftIcon="close" onLeft={onCancel} />
+      <AppHeader title="Datos de pago" leftIcon="close" onLeft={processing ? undefined : onCancel} />
       <div style={{ flex: 1, overflow: 'auto', padding: 20 }}>
-        <h3 style={{ margin: '0 0 10px', fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 15, color: SPOTA.c.text }}>Medio de pago</h3>
-        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-          {['Tarjeta de crédito', 'Tarjeta de débito'].map(t => (
-            <Chip key={t} active={card.tipo === t} onClick={() => setC('tipo', t)}>{t}</Chip>
-          ))}
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 18 }}>
-          <Field label="Número de tarjeta (16 dígitos)" placeholder="4111 1111 1111 1111" value={card.numero} onChange={(v) => setC('numero', v)} icon="wallet" />
-          <div style={{ display: 'flex', gap: 10 }}>
-            <Field label="Vencimiento (MM/AAAA)" placeholder="12/2028" value={card.venc} onChange={(v) => setC('venc', v)} />
-            <Field label="Código (3 o 4 dígitos)" placeholder="123" value={card.cvv} onChange={(v) => setC('cvv', v)} />
+        {subtitle && (
+          <p style={{ margin: '0 0 16px', fontFamily: SPOTA.font.ui, fontSize: 13.5, color: SPOTA.c.textSoft, lineHeight: 1.5 }}>{subtitle}</p>
+        )}
+        {usingSaved ? (
+          <div style={{ background: SPOTA.c.surface, borderRadius: 14, padding: 16, border: `1px solid ${SPOTA.c.lineSoft}` }}>
+            <h3 style={{ margin: '0 0 10px', fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 15, color: SPOTA.c.text }}>Medio de pago</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Icon name="wallet" size={18} color={SPOTA.c.primary} />
+                <div>
+                  <div style={{ fontFamily: SPOTA.font.ui, fontWeight: 600, fontSize: 14, color: SPOTA.c.text }}>{savedMedio.tipo} •••• {savedMedio.last4}</div>
+                  <div style={{ fontFamily: SPOTA.font.ui, fontSize: 12.5, color: SPOTA.c.textSoft }}>{savedMedio.note}</div>
+                </div>
+              </div>
+              <Btn variant="ghost" size="sm" disabled={processing} onClick={() => setExpanded(true)}>Cambiar</Btn>
+            </div>
+            {chargeNote && (
+              <p style={{ margin: '10px 0 0', fontFamily: SPOTA.font.ui, fontSize: 12.5, color: SPOTA.c.textMuted }}>{chargeNote}</p>
+            )}
           </div>
-        </div>
-        <h3 style={{ margin: '0 0 10px', fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 15, color: SPOTA.c.text }}>Facturación</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 12 }}>
-          <Field label="Nombre completo" placeholder="Sol Benítez" value={bill.nombre} onChange={(v) => setB('nombre', v)} icon="user" />
-          <Field label="DNI (XX.XXX.XXX)" placeholder="34.567.890" value={bill.dni} onChange={(v) => setB('dni', v)} />
-          <div>
-            <div style={{ fontFamily: SPOTA.font.ui, fontWeight: 600, fontSize: 13, color: SPOTA.c.text, marginBottom: 6 }}>Condición frente al IVA</div>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {['Consumidor final', 'Monotributista'].map(o => (
-                <Chip key={o} active={bill.iva === o} onClick={() => setB('iva', o)}>{o}</Chip>
+        ) : (
+          <React.Fragment>
+            <h3 style={{ margin: '0 0 10px', fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 15, color: SPOTA.c.text }}>Medio de pago</h3>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+              {['Tarjeta de crédito', 'Tarjeta de débito'].map(t => (
+                <Chip key={t} active={card.tipo === t} onClick={() => setC('tipo', t)}>{t}</Chip>
               ))}
             </div>
-          </div>
-          <Field label="Email para comprobantes" placeholder="vos@correo.com" value={bill.email} onChange={(v) => setB('email', v)} icon="mail" />
-        </div>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, cursor: 'pointer' }}>
-          <input type="checkbox" checked={save} onChange={(e) => setSave(e.target.checked)} />
-          <span style={{ fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.text }}>Guardar medio de pago y datos de facturación para próximas veces.</span>
-        </label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 18 }}>
+              <Field label="Número de tarjeta (16 dígitos)" placeholder="4111 1111 1111 1111" value={card.numero} onChange={(v) => setC('numero', v)} icon="wallet" />
+              <div style={{ display: 'flex', gap: 10 }}>
+                <Field label="Vencimiento (MM/AAAA)" placeholder="12/2028" value={card.venc} onChange={(v) => setC('venc', v)} />
+                <Field label="Código (3 o 4 dígitos)" placeholder="123" value={card.cvv} onChange={(v) => setC('cvv', v)} />
+              </div>
+            </div>
+            <h3 style={{ margin: '0 0 10px', fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 15, color: SPOTA.c.text }}>Facturación</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 12 }}>
+              <Field label="Nombre completo" placeholder="Sol Benítez" value={bill.nombre} onChange={(v) => setB('nombre', v)} icon="user" />
+              <Field label="DNI (XX.XXX.XXX)" placeholder="34.567.890" value={bill.dni} onChange={(v) => setB('dni', v)} />
+              <div>
+                <div style={{ fontFamily: SPOTA.font.ui, fontWeight: 600, fontSize: 13, color: SPOTA.c.text, marginBottom: 6 }}>Condición frente al IVA</div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {['Consumidor final', 'Monotributista'].map(o => (
+                    <Chip key={o} active={bill.iva === o} onClick={() => setB('iva', o)}>{o}</Chip>
+                  ))}
+                </div>
+              </div>
+              <Field label="Email para comprobantes" placeholder="vos@correo.com" value={bill.email} onChange={(v) => setB('email', v)} icon="mail" />
+            </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, cursor: 'pointer' }}>
+              <input type="checkbox" checked={save} onChange={(e) => setSave(e.target.checked)} />
+              <span style={{ fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.text }}>Guardar medio de pago y datos de facturación para próximas veces.</span>
+            </label>
+          </React.Fragment>
+        )}
       </div>
       <div style={{ padding: '12px 20px 18px', background: SPOTA.c.bg, borderTop: `1px solid ${SPOTA.c.lineSoft}` }}>
-        <Btn variant="primary" size="lg" full disabled={!filled} icon="check" onClick={() => onConfirm({ card, bill, save })}>
-          Pagar ${amount.toLocaleString('es-AR')}
+        <Btn variant="primary" size="lg" full disabled={processing || !canConfirm} icon="check" onClick={doConfirm}>
+          {processing ? 'Procesando pago…' : (ctaLabel || ('Pagar $' + amount.toLocaleString('es-AR')))}
         </Btn>
-        <p style={{ margin: '8px 0 0', fontFamily: SPOTA.font.ui, fontSize: 11.5, color: SPOTA.c.textMuted, textAlign: 'center' }}>
-          Los fondos quedan en custodia hasta finalizar el servicio.
-        </p>
       </div>
     </div>
   );
@@ -4068,7 +4097,14 @@ const ScreenHireHost = ({ nav }) => {
 
       {/* Paywall Variante A (item 14) */}
       {phase === 'paywall' && (
-        <PaywallVariantA amount={total} onCancel={() => setPhase('summary')} onConfirm={() => setPhase('confirmed')} />
+        <PaywallVariantA
+          amount={total}
+          savedMedio={{ tipo: 'Tarjeta de crédito', last4: '4821', note: 'Guardada en tu perfil.' }}
+          chargeNote={'Cobramos $' + total.toLocaleString('es-AR') + ' · los fondos quedan en custodia hasta finalizar la experiencia.'}
+          subtitle={<>Contratación de host · <strong style={{ color: SPOTA.c.text }}>${total.toLocaleString('es-AR')}</strong>.</>}
+          onCancel={() => setPhase('summary')}
+          onConfirm={() => setPhase('confirmed')}
+        />
       )}
 
       {/* Confirmación post-cobro (item 15) */}
@@ -4471,7 +4507,9 @@ const COMP_OPTIONS = ['Factura A', 'Factura B', 'Factura C'];
 const ScreenRegisterBiz = ({ nav, params }) => {
   const backTarget = (params && params.from === 'login') ? 'login' : 'home';
   const [step, setStep] = React.useState(1);
-  const totalSteps = 4;
+  const totalSteps = 3;
+  const [showPaywall, setShowPaywall] = React.useState(false);
+  const [registered, setRegistered] = React.useState(false);
   const [form, setForm] = React.useState({
     razon: 'Café Cobrand', cuit: '30-71234567-8',
     calle: 'Honduras', numero: '4900', barrio: 'Palermo', ciudad: 'CABA',
@@ -4496,8 +4534,22 @@ const ScreenRegisterBiz = ({ nav, params }) => {
     1: 'Identidad del negocio',
     2: 'Dirección y titularidad',
     3: 'Datos de facturación',
-    4: 'Medio de pago',
   };
+  if (registered) return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: SPOTA.c.bg }}>
+      <AppHeader title="" leftIcon="arrowLeft" onLeft={() => nav('bizHome')} />
+      <div style={{ flex: 1, overflow: 'auto', padding: 24, display: 'flex', flexDirection: 'column', justifyContent: 'center', textAlign: 'center' }}>
+        <div style={{ width: 76, height: 76, borderRadius: 999, background: SPOTA.c.primarySoft, margin: '0 auto 18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name="mail" size={34} color={SPOTA.c.primary} />
+        </div>
+        <h1 style={{ margin: '0 0 8px', fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 22, color: SPOTA.c.text }}>Revisá tu email</h1>
+        <p style={{ margin: '0 0 22px', fontFamily: SPOTA.font.ui, fontSize: 13.5, color: SPOTA.c.textSoft, lineHeight: 1.55 }}>
+          Te enviamos un email a <strong style={{ color: SPOTA.c.text }}>{form.email}</strong> para verificar tu cuenta de negocio. Confirmá el enlace para activarla — el medio de pago ya quedó validado.
+        </p>
+        <Btn variant="primary" size="lg" full iconRight="arrowRight" onClick={() => nav('bizHome')}>Ya verifiqué, ir al panel</Btn>
+      </div>
+    </div>
+  );
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: SPOTA.c.bg }}>
       <AppHeader title="" leftIcon="arrowLeft" onLeft={() => step > 1 ? setStep(step - 1) : nav(backTarget)} />
@@ -4574,43 +4626,10 @@ const ScreenRegisterBiz = ({ nav, params }) => {
               </div>
             </div>
             <Field label="Email para envío de comprobantes" type="email" value={form.emailFact} onChange={(v) => set('emailFact', v)} icon="mail" />
-          </div>
-        )}
-
-        {step === 4 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div>
-              <div style={{ fontFamily: SPOTA.font.ui, fontWeight: 600, fontSize: 13, color: SPOTA.c.text, marginBottom: 6 }}>Tipo de tarjeta</div>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {['Tarjeta de crédito', 'Tarjeta de débito'].map(o => <Chip key={o} active={form.cardTipo === o} onClick={() => set('cardTipo', o)}>{o}</Chip>)}
-              </div>
-            </div>
-            <Field label="Número de tarjeta (16 dígitos)" value={form.cardNumero} onChange={(v) => set('cardNumero', v)} icon="wallet" />
-            <div style={{ display: 'flex', gap: 10 }}>
-              <Field label="Vencimiento (MM/AAAA)" value={form.cardVenc} onChange={(v) => set('cardVenc', v)} />
-              <Field label="Código (3 o 4 dígitos)" value={form.cardCvv} onChange={(v) => set('cardCvv', v)} />
-            </div>
-            <div style={{
-              padding: 12, borderRadius: 12,
-              background: testCharge === 'ok' ? SPOTA.c.primarySoft : SPOTA.c.surface,
-              border: `1.5px solid ${testCharge === 'ok' ? SPOTA.c.primary : SPOTA.c.line}`,
-              display: 'flex', alignItems: 'center', gap: 10,
-            }}>
-              <Icon name={testCharge === 'ok' ? 'checkCircle' : 'wallet'} size={20} color={testCharge === 'ok' ? SPOTA.c.primary : SPOTA.c.textSoft} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 13.5, color: SPOTA.c.text }}>
-                  {testCharge === 'running' ? 'Procesando cobro testigo…' : testCharge === 'ok' ? 'Cobro testigo exitoso' : 'Cobro testigo de validación'}
-                </div>
-                <div style={{ fontFamily: SPOTA.font.ui, fontSize: 11.5, color: SPOTA.c.textSoft }}>
-                  Pasarela: cobramos y reembolsamos $1 para validar el medio.
-                </div>
-              </div>
-              {testCharge === 'pending' && <Btn variant="outline" size="sm" onClick={triggerTest}>Validar medio</Btn>}
-            </div>
             <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginTop: 4, cursor: 'pointer' }}>
               <input type="checkbox" checked={form.accepted} onChange={(e) => set('accepted', e.target.checked)} style={{ marginTop: 2 }} />
               <span style={{ fontFamily: SPOTA.font.ui, fontSize: 12.5, color: SPOTA.c.textSoft, lineHeight: 1.5 }}>
-                Acepto los <a style={{ color: SPOTA.c.primary, fontWeight: 600 }}>términos comerciales</a> y la <a style={{ color: SPOTA.c.primary, fontWeight: 600 }}>política de comisiones</a> de Spota Negocios. Modalidad de pago inicial: One-off.
+                Acepto los <a style={{ color: SPOTA.c.primary, fontWeight: 600 }}>términos comerciales</a> y la <a style={{ color: SPOTA.c.primary, fontWeight: 600 }}>política de comisiones</a> de Spota Negocios.
               </span>
             </label>
           </div>
@@ -4623,11 +4642,20 @@ const ScreenRegisterBiz = ({ nav, params }) => {
           {step < totalSteps ? (
             <Btn variant="primary" full iconRight="arrowRight" disabled={step === 2 && !validated} onClick={() => setStep(step + 1)}>Continuar</Btn>
           ) : (
-            <Btn variant="primary" full icon="check" disabled={testCharge !== 'ok' || !form.accepted} onClick={() => nav('bizHome')}>Activar cuenta</Btn>
+            <Btn variant="primary" full icon="wallet" disabled={!form.accepted} onClick={() => setShowPaywall(true)}>Continuar al pago</Btn>
           )}
         </div>
         <p style={{ marginTop: 18, fontFamily: SPOTA.font.ui, fontSize: 12.5, color: SPOTA.c.textSoft, textAlign: 'center' }}>¿Ya tenés cuenta? <a onClick={() => nav('login')} style={{ color: SPOTA.c.primary, fontWeight: 700, cursor: 'pointer' }}>Iniciar sesión</a></p>
       </div>
+      {showPaywall && (
+        <PaywallVariantA
+          amount={1}
+          subtitle="Validación del medio de pago para activar tu cuenta de negocio. Se cobra y reembolsa $1."
+          ctaLabel="Validar y activar"
+          onCancel={() => setShowPaywall(false)}
+          onConfirm={() => { setShowPaywall(false); setRegistered(true); }}
+        />
+      )}
     </div>
   );
 };
@@ -4960,9 +4988,9 @@ const ScreenBizCampaign = ({ nav }) => {
     );
   }
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: SPOTA.c.bg, position: 'relative' }}>
+    <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: SPOTA.c.bg, position: 'relative' }}>
       <AppHeader title="Nueva campaña" leftIcon="arrowLeft" onLeft={() => nav('bizHome')} />
-      <div style={{ flex: 1, overflow: 'auto', padding: 20 }}>
+      <div style={{ flex: 1, minHeight: 0, overflow: 'auto', padding: 20 }}>
         <div style={{ background: SPOTA.c.surface, borderRadius: 14, padding: 14, marginBottom: 14, border: `1px solid ${SPOTA.c.lineSoft}` }}>
           <Field label="Nombre de la campaña (máx 60 caracteres)" placeholder="Café de filtro · invierno" value={name} onChange={(v) => setName(v.slice(0, 60))} icon="megaphone" />
         </div>
@@ -5007,55 +5035,19 @@ const ScreenBizCampaign = ({ nav }) => {
           <PlaceCard place={{ ...PLACES[0], tag: 'Patrocinado' }} density="cozy" famaVariant="classic" onClick={() => {}} />
         </div>
 
-        {/* Paywall Variante B inline */}
-        <div style={{ background: SPOTA.c.surface, borderRadius: 14, padding: 14, marginBottom: 14, border: `1px solid ${SPOTA.c.lineSoft}` }}>
-          <h3 style={{ margin: '0 0 8px', fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 14, color: SPOTA.c.text }}>Medio de pago</h3>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Icon name="wallet" size={16} color={SPOTA.c.primary} />
-              <div>
-                <div style={{ fontFamily: SPOTA.font.ui, fontWeight: 600, fontSize: 13.5, color: SPOTA.c.text }}>Tarjeta de crédito •••• 4821</div>
-                <div style={{ fontFamily: SPOTA.font.ui, fontSize: 11.5, color: SPOTA.c.textSoft }}>Configurada en el registro del negocio.</div>
-              </div>
-            </div>
-            <button onClick={() => setShowCardPaywall(true)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 12.5, color: SPOTA.c.primary }}>Cambiar</button>
-          </div>
-          <p style={{ margin: '8px 0 0', fontFamily: SPOTA.font.ui, fontSize: 11.5, color: SPOTA.c.textMuted }}>
-            Cobramos ${budget.toLocaleString('es-AR')} por adelantado al lanzar.
-          </p>
-        </div>
-
-        <Btn variant="primary" size="lg" full disabled={!launchReady} icon="check" onClick={() => setShowPaywall(true)}>Lanzar campaña</Btn>
+        <Btn variant="primary" size="lg" full disabled={!launchReady} icon="check" onClick={() => setShowCardPaywall(true)}>Lanzar campaña</Btn>
       </div>
 
-      {/* Confirmación final de cobro Variante B */}
-      {showPaywall && (
-        <div onClick={() => setShowPaywall(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(43,37,35,0.55)', display: 'flex', alignItems: 'flex-end', zIndex: 80 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: SPOTA.c.bg, width: '100%', borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: '14px 22px 24px', animation: 'slideUp 260ms cubic-bezier(.2,.8,.2,1)' }}>
-            <div style={{ width: 40, height: 4, borderRadius: 999, background: SPOTA.c.line, margin: '0 auto 14px' }} />
-            <h2 style={{ margin: '0 0 12px', fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 20, color: SPOTA.c.text }}>Confirmar cobro</h2>
-            {[
-              { l: 'Campaña', v: name },
-              { l: 'Importe', v: `$${budget.toLocaleString('es-AR')}` },
-              { l: 'Duración', v: `${days} días` },
-              { l: 'Medio', v: 'Tarjeta de crédito •••• 4821' },
-            ].map(r => (
-              <div key={r.l} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontFamily: SPOTA.font.ui, fontSize: 13.5 }}>
-                <span style={{ color: SPOTA.c.textSoft }}>{r.l}</span>
-                <span style={{ color: SPOTA.c.text, fontWeight: 600 }}>{r.v}</span>
-              </div>
-            ))}
-            <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
-              <Btn variant="outline" full onClick={() => setShowPaywall(false)}>Cancelar</Btn>
-              <Btn variant="primary" full icon="check" onClick={() => { setShowPaywall(false); setDone(true); }}>Cobrar y lanzar</Btn>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Si pide cambiar medio: dispara Variante A */}
       {showCardPaywall && (
-        <PaywallVariantA amount={budget} onCancel={() => setShowCardPaywall(false)} onConfirm={() => { setShowCardPaywall(false); setDone(true); }} />
+        <PaywallVariantA
+          amount={budget}
+          savedMedio={{ tipo: 'Tarjeta de crédito', last4: '4821', note: 'Configurada en el registro del negocio.' }}
+          chargeNote={'Cobramos $' + budget.toLocaleString('es-AR') + ' por adelantado al lanzar.'}
+          subtitle={<>Campaña "{name}" · <strong style={{ color: SPOTA.c.text }}>${budget.toLocaleString('es-AR')}</strong> · {days} días.</>}
+          ctaLabel="Cobrar y lanzar"
+          onCancel={() => setShowCardPaywall(false)}
+          onConfirm={() => { setShowCardPaywall(false); setDone(true); }}
+        />
       )}
     </div>
   );
@@ -5140,14 +5132,17 @@ const ScreenBizInsights = ({ nav, params }) => {
         </div>
       </div>
       {showCharge && (
-        <InsightsChargeModal
-          price={REPORT_PRICE}
-          onClose={() => setShowCharge(false)}
+        <PaywallVariantA
+          amount={REPORT_PRICE}
+          savedMedio={{ tipo: 'Visa', last4: '4821', note: 'Configurada en el registro del negocio.' }}
+          chargeNote={'Cobramos $' + REPORT_PRICE.toLocaleString('es-AR') + ' por este reporte (modalidad One-off). Pasá a Tier para reportes ilimitados.'}
+          subtitle={<>Cobro del reporte de insights · <strong style={{ color: SPOTA.c.text }}>${REPORT_PRICE.toLocaleString('es-AR')}</strong> (One-off).</>}
+          ctaLabel="Confirmar y ejecutar"
+          onCancel={() => setShowCharge(false)}
           onConfirm={() => {
             setShowCharge(false);
             nav('bizInsightsResult', { period, activity, segment, compare, customFrom, customTo, tier: false });
           }}
-          onChangeCard={() => nav('bizRegister', { from: 'home' })}
         />
       )}
     </div>
@@ -5314,6 +5309,7 @@ const TIER_BENEFITS = [
 ];
 const ScreenBizSubscribe = ({ nav }) => {
   const [plan, setPlan] = React.useState('anual');
+  const [showPaywall, setShowPaywall] = React.useState(false);
   const [accepted, setAccepted] = React.useState(false);
   const [done, setDone] = React.useState(false);
   const selected = TIER_PLANS.find(p => p.id === plan);
@@ -5335,9 +5331,9 @@ const ScreenBizSubscribe = ({ nav }) => {
     );
   }
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: SPOTA.c.bg }}>
+    <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: SPOTA.c.bg }}>
       <AppHeader title="Pasar a Tier" leftIcon="arrowLeft" onLeft={() => nav('bizInsights')} />
-      <div style={{ flex: 1, overflow: 'auto', padding: 20 }}>
+      <div style={{ flex: 1, minHeight: 0, overflow: 'auto', padding: 20 }}>
         <h1 style={{ margin: '0 0 6px', fontFamily: SPOTA.font.ui, fontSize: 22, fontWeight: 700, color: SPOTA.c.text, letterSpacing: -0.4 }}>
           Reportes <span style={{ fontFamily: SPOTA.font.serif, fontStyle: 'italic', color: SPOTA.c.secondary, fontWeight: 400 }}>ilimitados</span>
         </h1>
@@ -5392,13 +5388,6 @@ const ScreenBizSubscribe = ({ nav }) => {
               <span style={{ color: SPOTA.c.text, fontWeight: 600 }}>{r.v}</span>
             </div>
           ))}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 10, borderTop: `1px solid ${SPOTA.c.lineSoft}`, marginTop: 6 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Icon name="wallet" size={16} color={SPOTA.c.primary} />
-              <span style={{ fontFamily: SPOTA.font.ui, fontSize: 13, color: SPOTA.c.text }}>Visa •••• 4821</span>
-            </div>
-            <button onClick={() => nav('bizRegister', { from: 'home' })} style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontFamily: SPOTA.font.ui, fontWeight: 700, fontSize: 12.5, color: SPOTA.c.primary }}>Cambiar medio</button>
-          </div>
         </div>
         <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 18, cursor: 'pointer' }}>
           <input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} style={{ marginTop: 4 }} />
@@ -5406,10 +5395,21 @@ const ScreenBizSubscribe = ({ nav }) => {
             Acepto los términos comerciales del plan Tier (renovación automática hasta cancelación).
           </span>
         </label>
-        <Btn variant="primary" size="lg" full disabled={!accepted} icon="check" onClick={() => setDone(true)}>
+        <Btn variant="primary" size="lg" full disabled={!accepted} icon="check" onClick={() => setShowPaywall(true)}>
           Activar suscripción
         </Btn>
       </div>
+      {showPaywall && (
+        <PaywallVariantA
+          amount={selected.price}
+          savedMedio={{ tipo: 'Visa', last4: '4821', note: 'Configurada en el registro del negocio.' }}
+          chargeNote={'Cobramos $' + selected.price.toLocaleString('es-AR') + ' ' + selected.period + ' (renovación automática hasta cancelación).'}
+          subtitle={<>Suscripción Tier <strong style={{ color: SPOTA.c.text }}>{selected.t}</strong> · ${selected.price.toLocaleString('es-AR')} {selected.period}.</>}
+          ctaLabel="Activar suscripción"
+          onCancel={() => setShowPaywall(false)}
+          onConfirm={() => { setShowPaywall(false); setDone(true); }}
+        />
+      )}
     </div>
   );
 };
