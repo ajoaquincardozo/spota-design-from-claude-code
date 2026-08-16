@@ -82,7 +82,9 @@ fi
 if [ "$ONLY_MONOLITH" = "0" ]; then
   {
     cat src/_head.html
-    echo "<!-- Modulos servidos por HTTP. El ORDEN de estos tags es el orden de evaluacion. -->"
+    # sale de un archivo, no de un echo: asi los dos builds emiten los mismos
+    # bytes, y de paso el .cmd esquiva que cmd se coma el "!" de "<!--"
+    cat src/_index_note.html
     for m in $MODS; do
       echo "<script type=\"text/babel\" data-presets=\"react\" src=\"src/$m\"></script>"
     done

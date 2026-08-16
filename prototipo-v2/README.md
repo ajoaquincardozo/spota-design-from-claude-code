@@ -29,6 +29,7 @@ prototipo-v2/
 │   ├── _head.html                ← <head>, CSS y CDNs
 │   ├── _open.html / _sep.html / _close.html   ← apertura, separador y cierre
 │   ├── _bootstrap.html           ← el motor que evalua los modulos (ver §3)
+│   ├── _index_note.html          ← comentario del index.html (ver §3, nota del `!`)
 │   ├── _tail.html
 │   └── 01-ios-frame.jsx … 13-app.jsx
 └── tools/                        ← interno, no se ejecuta a mano

@@ -100,7 +100,11 @@ if "%ONLY_MONOLITH%"=="1" goto :sin_index
 set "IDX=%HERE%\index.html"
 
 > "!IDX!" type "src\_head.html"
->> "!IDX!" echo ^<!-- Modulos servidos por HTTP. El ORDEN de estos tags es el orden de evaluacion. --^>
+REM El comentario HTML se emite con type y no con echo a proposito. Con
+REM enabledelayedexpansion, cmd toma el signo de admiracion como delimitador de
+REM expansion y lo borra, asi que la apertura del comentario HTML salia mal en el
+REM archivo generado. Se puede escapar, pero type copia bytes sin parsear nada.
+>> "!IDX!" type "src\_index_note.html"
 
 for /f "usebackq eol=# delims=" %%F in ("src\manifest.txt") do >> "!IDX!" echo ^<script type="text/spota-jsx" src="src/%%F"^>^</script^>
 

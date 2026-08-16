@@ -33,6 +33,7 @@ prototipo-desktop-refactor-unified-poc/
 │   ├── manifest.txt              ← orden de carga de los 19 modulos
 │   ├── _head.html                ← <head>, CSS y CDNs (comun a los dos artefactos)
 │   ├── _open.html / _close.html  ← apertura y cierre del script (solo monolito)
+│   ├── _index_note.html          ← comentario del index.html (va en archivo, no en echo)
 │   ├── _tail.html                ← cierre del documento (comun)
 │   └── 01-tokens.jsx … 19-app.jsx
 └── tools/                        ← interno, no se ejecuta a mano
