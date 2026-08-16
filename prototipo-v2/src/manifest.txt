@@ -1,0 +1,31 @@
+# Orden de carga de los modulos. Una linea por archivo, sin la carpeta src/.
+# Las lineas vacias y las que empiezan con # se ignoran.
+#
+# EL ORDEN IMPORTA: no hay imports ni resolucion de dependencias. Cada modulo se
+# evalua en su propio scope y publica lo que quiere compartir con
+# Object.assign(window, {...}). Un modulo solo puede usar lo que publicaron los
+# que estan arriba suyo.
+#
+# _head.html, _open/_sep/_close.html, _bootstrap.html y _tail.html no se listan
+# aca: no son modulos, son el cascaron.
+
+# --- chrome del prototipo: marco iOS y panel de tweaks ---
+01-ios-frame.jsx
+02-tweaks-panel.jsx
+
+# --- base: tokens, datos mock y primitives ---
+03-tokens.jsx
+04-data.jsx
+05-components.jsx
+
+# --- pantallas por bloque funcional ---
+06-screens-onboarding.jsx
+07-screens-discover.jsx
+08-screens-experiences.jsx
+09-screens-collections.jsx
+10-screens-plans.jsx
+11-screens-hosts.jsx
+12-screens-business.jsx
+
+# --- router + mount (siempre ultimo) ---
+13-app.jsx

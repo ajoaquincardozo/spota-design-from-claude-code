@@ -1,0 +1,84 @@
+<script>
+// ============================================================================
+//  Bootstrap del prototipo mobile.
+//
+//  Transforma y evalua cada modulo EN ORDEN, cada uno en su propio scope.
+//  Es la pieza que el mobile ya tenia (no la inventamos aca); lo unico que se
+//  le agrego es saber bajar modulos externos, para que el mismo bootstrap
+//  sirva a los dos artefactos:
+//
+//    monolito     -> los modulos vienen inline, en s.textContent
+//    index.html   -> los modulos vienen por HTTP, en s.src
+//
+//  POR QUE eval indirecto y no dejar que Babel corra los scripts solo:
+//
+//  Babel standalone, cuando corre el mismo los scripts, los inyecta como
+//  <script> reales. Los <script> clasicos COMPARTEN el scope lexico global,
+//  asi que dos modulos que declaren el mismo `const` se pisan y explota todo
+//  con "Identifier X has already been declared".
+//
+//  Este prototipo tiene exactamente ese caso: `TabBar` esta declarado en
+//  05-components.jsx (version vieja, sin usos) y otra vez en 13-app.jsx (la que
+//  se usa de verdad). Con eval indirecto cada modulo corre en su propio scope y
+//  la colision es inofensiva; lo que se comparte entre modulos es lo que cada
+//  uno publica explicitamente con Object.assign(window, {...}).
+//
+//  POR QUE type="text/spota-jsx" y no "text/babel":
+//
+//  Babel solo corre solo los scripts type="text/babel" y "text/jsx". Con un
+//  type propio los ignora, y entonces los modulos se evaluan UNA sola vez, aca.
+//  El HTML original usaba "text/babel", asi que Babel corria todo primero, se
+//  clavaba en el TabBar duplicado -SyntaxError en consola- y recien despues
+//  este bootstrap lo levantaba bien. Funcionaba, pero ejecutando dos veces y
+//  dejando un error rojo en la consola. Con el type propio, eso desaparece.
+// ============================================================================
+(function () {
+  var TYPE = 'text/spota-jsx';
+
+  function fail(label, e) {
+    console.error('[bootstrap] ' + label + ' fallo:', e);
+    var div = document.getElementById('app');
+    if (div) {
+      div.innerHTML = '<pre style="color:#f88;padding:24px;font-family:monospace;'
+        + 'font-size:12px;white-space:pre-wrap">Error en ' + label + ':\n'
+        + ((e && e.message) || e) + '</pre>';
+    }
+  }
+
+  function runAll(modules) {
+    for (var i = 0; i < modules.length; i++) {
+      try {
+        var code = Babel.transform(modules[i].code, { presets: ['react'] }).code;
+        (0, eval)(code);            // indirecto: scope propio por modulo
+      } catch (e) {
+        fail(modules[i].label, e);  // se corta: seguir con el resto solo encadena errores
+        return;
+      }
+    }
+  }
+
+  window.addEventListener('DOMContentLoaded', function () {
+    var scripts = [].slice.call(document.querySelectorAll('script[type="' + TYPE + '"]'));
+
+    if (!scripts.length) {
+      fail('bootstrap', new Error('No se encontro ningun modulo ' + TYPE + '.'));
+      return;
+    }
+
+    // Los externos se bajan en paralelo, pero Promise.all conserva el orden del
+    // array: el orden de evaluacion sigue siendo el orden de los tags.
+    var jobs = scripts.map(function (s, i) {
+      var label = s.src ? s.src.split('/').pop() : ('modulo inline ' + i);
+      if (!s.src) return Promise.resolve({ code: s.textContent, label: label });
+      return fetch(s.src).then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.text();
+      }).then(function (code) { return { code: code, label: label }; });
+    });
+
+    Promise.all(jobs).then(runAll).catch(function (e) {
+      fail('la descarga de modulos', e);
+    });
+  });
+})();
+</script>
