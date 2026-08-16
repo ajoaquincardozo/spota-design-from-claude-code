@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<!--
+  ============================================================================
+  ARCHIVO GENERADO - NO EDITAR A MANO.
+
+  Salen dos artefactos de la misma fuente (src/ + src/manifest.txt):
+
+    index.html                     -> 19 etiquetas script+src, modo servidor
+    Spota Prototipo Desktop.html   -> monolito autocontenido, para file:/// e IIS
+
+  Cualquier cambio hecho aca se pierde en el proximo build.
+  Para modificar algo: edita el .jsx en src/ y corre build.cmd / build.sh.
+  ============================================================================
+-->
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Spota — Prototipo Desktop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Fraunces:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; font-family: "DM Sans", system-ui, sans-serif; background: #FFF8ED; color: #2B2523; -webkit-font-smoothing: antialiased; }
+  body { min-height: 100vh; }
+  #app { width: 100%; min-height: 100vh; }
+  button { font-family: inherit; }
+  input, textarea { font-family: inherit; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: #EADFC9; border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: #D6C8AB; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="app"></div>
+
